@@ -1,21 +1,26 @@
 from django.db import models
 from datetime import date
 
-from academia.Academia import Paralelo
-from core.Core import Direccion
-from gestion_academica.models.persona.Tipo_documento import Tipo_documento
+from ..core.Core import Direccion
+from ..persona.Tipo_documento import Tipo_documento
 from usuarios.models import Usuario
 
 
 class Persona(models.Model):
-
-    direccion = models.OneToOneField(
+    usuario = models.OneToOneField(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="persona"
+    )
+    direccion = models.ForeignKey(
         Direccion,
         on_delete=models.CASCADE,
         related_name="direccion",
     )
 
-    Tipo_documento = models.CharField(
+    tipo_documento = models.CharField(
         max_length=10,
         choices= Tipo_documento.choices,
         default= Tipo_documento.CEDULA,
@@ -29,7 +34,9 @@ class Persona(models.Model):
     fecha_nacimiento = models.DateField()
 
     class Meta:
-        abstract = True
+        db_table = "persona"
+        verbose_name = "Persona"
+        verbose_name_plural = "Personas"
 
     @property
     def edad(self):
@@ -46,11 +53,6 @@ class Persona(models.Model):
 
 "=================================== ADMINISTRACIÓN ====================================================="
 class Director(Persona):
-    usuario = models.OneToOneField(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name="director",
-    )
 
     class Meta:
         db_table = "director"
@@ -65,11 +67,6 @@ class Director(Persona):
         )
 
 class Secretaria(Persona):
-    usuario = models.OneToOneField(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name="secretaria",
-    )
 
     class Meta:
         db_table = "secretaria"
@@ -85,17 +82,9 @@ class Secretaria(Persona):
 
 "====================================== PERSONAL INSTITUCION ========================================="
 class Docente(Persona):
-    usuario = models.OneToOneField(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name="docente",
-    )
 
-    paralelo = models.ForeignKey(
-        Paralelo,
-        on_delete=models.PROTECT,
-        related_name="docentes"
-    )
+    titulo = models.CharField(max_length=20)
+    especialidad = models.CharField(max_length=20)
 
     class Meta:
         db_table = "docente"
@@ -125,13 +114,8 @@ class Representante(Persona):
         )
 
 class Estudiante(Persona):
-    usuario = models.OneToOneField(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name="estudiante",
-    )
 
-    representante = models.ForeignKey(
+    representante_legal = models.ForeignKey(
         Representante,
         on_delete=models.CASCADE,
         related_name="estudiantes",

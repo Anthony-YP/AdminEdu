@@ -11,15 +11,8 @@ class ComprobantePago(models.Model):
         default=TipoPago.EFECTIVO,
     )
 
-    tipo_archivo = models.FileField(
-        upload_to="comprobantes/"
-    )
-
-    monto = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-    )
-
+    tipo_archivo = models.FileField(upload_to="comprobantes/")
+    monto = models.DecimalField(max_digits=3,decimal_places=2)
     fecha = models.DateField()
 
     numero_ref = models.CharField(

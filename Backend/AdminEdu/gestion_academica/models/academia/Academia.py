@@ -28,12 +28,6 @@ class Curso(models.Model):
         related_name="cursos"
     )
 
-    docente = models.ForeignKey(
-        Docente,
-        on_delete=models.PROTECT,
-        related_name="paralelos"
-    )
-
     nombre = models.CharField(max_length=100)
     precio = models.DecimalField(max_digits=8,decimal_places=2)
     fecha_inicio = models.DateField()

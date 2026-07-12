@@ -38,14 +38,14 @@ class SecretariaSerializer(serializers.ModelSerializer):
         model = Secretaria
         fields = '__all__'
 
-class EstudianteSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Estudiante
-        fields = '__all__'
-
 class RepresentanteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Representante
+        fields = '__all__'
+
+class EstudianteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Estudiante
         fields = '__all__'
 
 class MatriculaSerializer(serializers.ModelSerializer):
