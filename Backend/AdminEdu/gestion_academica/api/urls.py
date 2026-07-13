@@ -2,7 +2,7 @@ from rest_framework.routers import DefaultRouter
 from gestion_academica.views import (AcademiaViewSet, CursoViewSet, ParaleloViewSet, DirectorViewSet,
                                     DocenteViewSet, SecretariaViewSet, EstudianteViewSet,
                                     RepresentanteViewSet, MatriculaViewSet, AsistenciaViewSet,
-                                     Calificacion_finalViewSet, NotificacionViewSet)
+                                     CalificacionFinalViewSet, NotificacionViewSet)
 
 router = DefaultRouter()
 router.register('academia', AcademiaViewSet, basename='academia')
@@ -15,7 +15,7 @@ router.register('estudiante', EstudianteViewSet, basename='estudiante')
 router.register('representante', RepresentanteViewSet, basename='representante')
 router.register('matricula', MatriculaViewSet, basename='matricula')
 router.register('asistencia', AsistenciaViewSet, basename='asistencia')
-router.register('calificacion', Calificacion_finalViewSet, basename='calificacion')
+router.register('calificacion', CalificacionFinalViewSet, basename='calificacion')
 router.register('notificacion', NotificacionViewSet, basename='notificacion')
 
 

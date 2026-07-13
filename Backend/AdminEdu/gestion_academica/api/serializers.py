@@ -1,11 +1,17 @@
-from gestion_academica.models.academia.Academia import Academia, Curso, Paralelo
-from gestion_academica.models.persona.Persona import (Director, Docente, Secretaria, Estudiante,
-                                                      Representante)
-from gestion_academica.models.matricula.Matricula import Matricula, Asistencia, CalificacionFinal
-from gestion_academica.models.notificaciones.Notificacion import Notificacion
+from gestion_academica.models.core.Core import *
+from gestion_academica.models.academia.Academia import *
+from gestion_academica.models.persona.Persona import *
+from gestion_academica.models.matricula.Matricula import *
+from gestion_academica.models.notificaciones.Notificacion import *
+from gestion_academica.models.pagos.Pagos import *
 
 from rest_framework import serializers
 
+
+class DireccionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Direccion
+        fields = '__all__'
 
 class AcademiaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,6 +28,10 @@ class ParaleloSerializer(serializers.ModelSerializer):
         model = Paralelo
         fields = '__all__'
 
+class PersonaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Persona
+        fields = '__all__'
 
 class DirectorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,7 +68,7 @@ class AsistenciaSerializer(serializers.ModelSerializer):
         model = Asistencia
         fields = '__all__'
 
-class Calificacion_finalSerializer(serializers.ModelSerializer):
+class CalificacionFinalSerializer(serializers.ModelSerializer):
     class Meta:
         model = CalificacionFinal
         fields = '__all__'
@@ -66,4 +76,9 @@ class Calificacion_finalSerializer(serializers.ModelSerializer):
 class NotificacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notificacion
+        fields = '__all__'
+
+class ComprobantePagoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComprobantePago
         fields = '__all__'

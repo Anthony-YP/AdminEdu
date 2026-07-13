@@ -4,6 +4,7 @@ from .models.academia.Academia import Academia, Curso, Paralelo
 from .models.persona.Persona import Director, Docente, Secretaria, Estudiante, Representante
 from .models.matricula.Matricula import Matricula, Asistencia, CalificacionFinal
 from .models.notificaciones.Notificacion import Notificacion
+from .models.pagos.Pagos import ComprobantePago
 
 admin.site.register(Academia)
 admin.site.register(Curso)
@@ -17,3 +18,4 @@ admin.site.register(Matricula)
 admin.site.register(Asistencia)
 admin.site.register(CalificacionFinal)
 admin.site.register(Notificacion)
+admin.site.register(ComprobantePago)
