@@ -1,8 +1,10 @@
-from gestion_academica.models.academia.Academia import Academia, Curso, Paralelo
-from gestion_academica.models.persona.Persona import Persona, Director, Docente, Secretaria, Estudiante, Representante
+
 from gestion_academica.api.serializers import *
 from rest_framework import viewsets, permissions
 
+class DireccionViewSet(viewsets.ModelViewSet):
+    queryset = Direccion.objects.all()
+    serializer_class = DireccionSerializer
 
 class AcademiaViewSet(viewsets.ModelViewSet):
     queryset = Academia.objects.all()
@@ -15,6 +17,10 @@ class CursoViewSet(viewsets.ModelViewSet):
 class ParaleloViewSet(viewsets.ModelViewSet):
     queryset = Paralelo.objects.all()
     serializer_class = ParaleloSerializer
+
+class PersonaViewSet(viewsets.ModelViewSet):
+    queryset = Persona.objects.all()
+    serializer_class = PersonaSerializer
 
 class DirectorViewSet(viewsets.ModelViewSet):
     queryset = Director.objects.all()
@@ -44,12 +50,16 @@ class AsistenciaViewSet(viewsets.ModelViewSet):
     queryset = Asistencia.objects.all()
     serializer_class = AsistenciaSerializer
 
-class Calificacion_finalViewSet(viewsets.ModelViewSet):
+class CalificacionFinalViewSet(viewsets.ModelViewSet):
     queryset = CalificacionFinal.objects.all()
-    serializer_class = Calificacion_finalSerializer
+    serializer_class = CalificacionFinalSerializer
 
 class NotificacionViewSet(viewsets.ModelViewSet):
     queryset = Notificacion.objects.all()
     serializer_class = NotificacionSerializer
+
+class ComprobantePagoViewSet(viewsets.ModelViewSet):
+    queryset = ComprobantePago.objects.all()
+    serializer_class = ComprobantePagoSerializer
 
 
