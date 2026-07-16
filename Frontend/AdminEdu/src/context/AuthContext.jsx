@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useCallback } from "react";
 
 
 export const AuthContext = createContext();
@@ -42,13 +42,28 @@ export function AuthProvider({children}){
         setUser(null);
     };
 
+    const isAuthenticated = !!user;
+
+    const hasGroup = useCallback((gruposPermitidos) => {
+        if (!user || !user.grupos) return false;
+        return user.grupos.some(g => gruposPermitidos.includes(g));
+    }, [user]);
+
+    const hasPermission = useCallback((permiso) => {
+        if (!user || !user.permisos) return false;
+        return user.permisos.includes(permiso);
+    }, [user]);
+
 
     return (
         <AuthContext.Provider
             value={{
                 user,
+                isAuthenticated,
                 login,
-                logout
+                logout,
+                hasGroup,
+                hasPermission,
             }}
         >
             {children}
