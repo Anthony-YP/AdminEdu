@@ -22,5 +22,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
+
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false},
+
   "include": ["src"]
+
 }

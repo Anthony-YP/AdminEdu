@@ -18,5 +18,4 @@ router.register('calificacion', CalificacionFinalViewSet, basename='calificacion
 router.register('notificacion', NotificacionViewSet, basename='notificacion')
 
 
-
 urlpatterns = router.urls
