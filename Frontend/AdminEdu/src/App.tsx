@@ -34,7 +34,7 @@ function App() {
                     <Route
                         path="/dashboard"
                         element={
-                            <ProtectedRoute allowedGroups={['Director', 'Secretaria', 'Docente', 'Estudiante', 'Representante']}>
+                            <ProtectedRoute allowedGroups={['Director', 'Secretaria', 'Docente', 'Estudiante']}>
                                 <Dashboard />
                             </ProtectedRoute>
                         }
@@ -43,7 +43,7 @@ function App() {
                     <Route
                         path="/cursos"
                         element={
-                            <ProtectedRoute allowedGroups={['Director', 'Secretaria', 'Docente']}>
+                            <ProtectedRoute allowedGroups={['Director', D]}>
                                 <Cursos />
                             </ProtectedRoute>
                         }

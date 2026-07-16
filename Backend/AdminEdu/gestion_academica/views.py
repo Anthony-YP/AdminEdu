@@ -1,6 +1,11 @@
-
-from gestion_academica.api.serializers import *
 from rest_framework import viewsets, permissions
+from gestion_academica.models.core.Core import *
+from gestion_academica.models.persona.Persona import *
+from gestion_academica.models.academia.Academia import *
+from gestion_academica.models.matricula.Matricula import *
+from gestion_academica.models.pagos.Pagos import *
+from gestion_academica.models.notificaciones.Notificacion import *
+from gestion_academica.api.serializers import *
 from usuarios.permissions import (
     EsDirector,
     EsSecretaria,
@@ -36,8 +41,9 @@ class CursoViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [EsAdministrativo()]
+            return [EsDirector()]
         return [permissions.IsAuthenticated()]
+
 
 class ParaleloViewSet(viewsets.ModelViewSet):
     queryset = Paralelo.objects.all()

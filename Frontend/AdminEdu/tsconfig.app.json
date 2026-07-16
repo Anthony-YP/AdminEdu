@@ -7,31 +7,18 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "allowJs": true,
-
-    /* Bundler mode */
+    "checkJs": false,
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
-    /* Linting */
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-
-  "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false},
-
   "include": ["src"]
-<<<<<<< HEAD
-
 }
-=======
-}
->>>>>>> 5e1db8a21cc4c708871af8efc835f057217fb742

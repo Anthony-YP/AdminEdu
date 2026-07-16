@@ -26,25 +26,51 @@ class LoginView(APIView):
 
         refresh = RefreshToken.for_user(usuario)
 
-        # Obtener grupos y permisos del usuario
-        grupos = list(usuario.groups.values_list('name', flat=True))
-        permisos = list(usuario.get_all_permissions())
+        grupos = list(
+            usuario.groups.values_list(
+                "name",
+                flat=True
+            )
+        )
 
-        # Agregar claims al JWT
-        refresh['grupos'] = grupos
-        refresh['user_id'] = usuario.id
-        refresh['username'] = usuario.username
+        permisos = list(
+            usuario.get_all_permissions()
+        )
+
+        refresh["grupos"] = grupos
+        refresh["user_id"] = usuario.id
+        refresh["username"] = usuario.username
 
         return Response({
+
             "refresh": str(refresh),
-            "access": str(refresh.access_token),
+
+            "access": str(
+                refresh.access_token
+            ),
+
             "usuario": {
+
                 "id": usuario.id,
+
                 "username": usuario.username,
+
                 "email": usuario.email,
+
                 "grupos": grupos,
+
+                "rol_principal": (
+                    grupos[0]
+                    if grupos
+                    else None
+                ),
+
                 "permisos": permisos,
+
                 "is_staff": usuario.is_staff,
+
                 "is_superuser": usuario.is_superuser,
+
             }
+
         }, status=status.HTTP_200_OK)
