@@ -4,6 +4,7 @@ import {
     Route
 } from "react-router-dom";
 
+import CursosForm from "./components/CursosForm";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header";
@@ -43,7 +44,7 @@ function App() {
                     <Route
                         path="/cursos"
                         element={
-                            <ProtectedRoute allowedGroups={['Director', D]}>
+                            <ProtectedRoute allowedGroups={['Director']}>
                                 <Cursos />
                             </ProtectedRoute>
                         }
@@ -54,6 +55,19 @@ function App() {
                         element={
                             <ProtectedRoute allowedGroups={['Director']}>
                                 <Usuarios />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/cursos/nuevo"
+                        element={
+                            <ProtectedRoute
+                                allowedGroups={[
+                                    "Director"
+                                ]}
+                            >
+                                <CursosForm />
                             </ProtectedRoute>
                         }
                     />

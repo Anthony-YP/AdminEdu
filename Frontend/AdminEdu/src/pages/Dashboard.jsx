@@ -4,11 +4,14 @@ import { useNavigate } from "react-router-dom";
 
 const cardsPorRol = {
     Director: [
-        { titulo: "Gestión de Cursos", descripcion: "Crear, editar y eliminar cursos y paralelos", ruta: "/cursos", color: "bg-blue-500" },
-        { titulo: "Usuarios", descripcion: "Administrar usuarios del sistema", ruta: "/usuarios", color: "bg-purple-500" },
-        { titulo: "Matrículas", descripcion: "Gestionar matrículas de estudiantes", ruta: "#", color: "bg-green-500" },
-        { titulo: "Reportes", descripcion: "Ver reportes académicos y financieros", ruta: "#", color: "bg-orange-500" },
+    {
+        titulo: "Gestión de Cursos",
+        descripcion: "Crear, editar y eliminar cursos y paralelos",
+        ruta: "/cursos",
+        color: "bg-blue-500"
+    }
     ],
+
     Secretaria: [
         { titulo: "Matrículas", descripcion: "Registrar matrículas de estudiantes", ruta: "#", color: "bg-green-500" },
         { titulo: "Estudiantes", descripcion: "Gestionar datos de estudiantes", ruta: "#", color: "bg-teal-500" },

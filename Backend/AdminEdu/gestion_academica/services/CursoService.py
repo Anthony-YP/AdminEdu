@@ -79,7 +79,6 @@ class CursoService:
         if curso_existente:
             raise ValidationError(
                 "Ya existe un curso con ese nombre "
-                "en esta academia."
             )
 
         return Curso.objects.create(
@@ -151,3 +150,23 @@ class CursoService:
         curso.save()
 
         return curso
+
+    @staticmethod
+    def listar_cursos():
+        """
+        Lista todos los cursos registrados.
+        """
+
+        return Curso.objects.all().order_by("nombre")
+
+    @staticmethod
+    def eliminar_curso(curso: Curso):
+        """
+        Elimina un curso aplicando las reglas de negocio.
+        """
+        if curso is None:
+            raise ValidationError(
+                "El curso no existe."
+            )
+
+        curso.delete()
