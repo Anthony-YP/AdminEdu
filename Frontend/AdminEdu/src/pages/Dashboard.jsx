@@ -47,33 +47,19 @@ export default function Dashboard() {
     const grupoPrincipal = user?.grupos?.[0] || "Sin rol";
     const cards = cardsPorRol[grupoPrincipal] || [];
 
-
-    const handleLogout = () => {
-        logout();
-        navigate("/login");
-    };
-
-
     return (
         <div className="min-h-screen bg-gray-100">
             {/* Barra superior */}
-            <header className="bg-white shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-800">
-                            Panel de {grupoPrincipal}
-                        </h1>
-                        <p className="text-sm text-gray-500">
-                            {user?.username} - {user?.email}
-                        </p>
-                    </div>
-                    <button
-                        onClick={handleLogout}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition duration-200"
-                    >
-                        Cerrar Sesión
-                    </button>
-                </div>
+            <header className="bg-white shadow border-b">
+                 <div className="max-w-7xl mx-auto px-6 py-6">
+                    <h1 className="text-3xl font-bold text-slate-800">
+                        Bienvenido, {user?.username}
+                    </h1>
+
+                    <p className="text-gray-500 mt-2">
+                        Panel de {grupoPrincipal}. Gestiona la información académica desde este módulo.
+                    </p>
+                 </div>
             </header>
 
             {/* Contenido principal */}
@@ -93,44 +79,63 @@ export default function Dashboard() {
                         <button
                             key={index}
                             onClick={() => navigate(card.ruta)}
-                            className={`${card.color} text-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 p-6 text-left`}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 text-left"
                         >
-                            <h3 className="text-lg font-bold mb-2">
+                            <div className="text-4xl mb-4">
+                                📚
+                            </div>
+
+                            <h3 className="text-xl font-bold mb-3">
                                 {card.titulo}
                             </h3>
-                            <p className="text-sm opacity-90">
+
+                            <p className="text-sm text-blue-100">
                                 {card.descripcion}
                             </p>
+
+                            <div className="mt-6 font-semibold">
+                                Ir al módulo →
+                            </div>
                         </button>
                     ))}
                 </div>
 
                 {/* Información del usuario */}
-                <div className="mt-8 bg-white rounded-xl shadow p-6">
-                    <h3 className="text-lg font-bold text-gray-800 mb-4">
-                        Información de la Sesión
+                <div className="mt-10">
+                    <h3 className="text-xl font-bold text-slate-800 mb-6">
+                        Información de la sesión
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span className="font-semibold text-gray-600">Usuario:</span>
-                            <span className="ml-2 text-gray-800">{user?.username}</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+
+                        <div className="bg-white rounded-xl shadow p-5">
+                            <p className="text-sm text-gray-500">Usuario</p>
+                            <p className="text-lg font-semibold mt-2">
+                                {user?.username}
+                            </p>
                         </div>
-                        <div>
-                            <span className="font-semibold text-gray-600">Email:</span>
-                            <span className="ml-2 text-gray-800">{user?.email}</span>
+
+                        <div className="bg-white rounded-xl shadow p-5">
+                            <p className="text-sm text-gray-500">Rol</p>
+                            <p className="text-lg font-semibold mt-2">
+                                {grupoPrincipal}
+                            </p>
                         </div>
-                        <div>
-                            <span className="font-semibold text-gray-600">Grupos:</span>
-                            <span className="ml-2 text-gray-800">
-                                {user?.grupos?.join(", ") || "Ninguno"}
-                            </span>
+
+                        <div className="bg-white rounded-xl shadow p-5">
+                            <p className="text-sm text-gray-500">Correo</p>
+                            <p className="text-lg font-semibold mt-2 break-all">
+                                {user?.email}
+                            </p>
                         </div>
-                        <div>
-                            <span className="font-semibold text-gray-600">Permisos:</span>
-                            <span className="ml-2 text-gray-800">
-                                {user?.permisos?.length || 0} permisos asignados
-                            </span>
+
+                        <div className="bg-white rounded-xl shadow p-5">
+                            <p className="text-sm text-gray-500">Permisos</p>
+                            <p className="text-lg font-semibold mt-2">
+                                {user?.permisos?.length || 0}
+                            </p>
                         </div>
+
                     </div>
                 </div>
             </main>

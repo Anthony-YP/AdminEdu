@@ -263,18 +263,13 @@ export default function CursosForm() {
                 "
             >
 
-                <h1
-                    className="
-                        text-2xl
-                        font-bold
-                        text-gray-800
-                        mb-6
-                    "
-                >
-
-                    Crear Curso
-
+                <h1 className="text-3xl font-bold text-slate-800">
+                    📚 Crear Nuevo Curso
                 </h1>
+
+                <p className="text-gray-500 mt-2">
+                    Complete la información para registrar un nuevo curso.
+                </p>
 
 
                 {

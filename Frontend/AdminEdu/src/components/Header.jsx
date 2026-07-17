@@ -16,13 +16,13 @@ export default function Header() {
 
 
     return (
-        <nav className="bg-gray-800 text-white shadow-lg">
+        <nav className="bg-slate-900 text-white shadow-md border-b border-slate-700">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo y links izquierda */}
                     <div className="flex items-center space-x-8">
                         <Link to="/" className="text-xl font-bold hover:text-gray-300 transition">
-                            AdminEdu
+                            🏫 AdminEdu
                         </Link>
 
                         {isAuthenticated && (
