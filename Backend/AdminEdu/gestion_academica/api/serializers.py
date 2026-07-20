@@ -4,6 +4,8 @@ from gestion_academica.models.persona.Persona import *
 from gestion_academica.models.matricula.Matricula import *
 from gestion_academica.models.notificaciones.Notificacion import *
 from gestion_academica.models.pagos.Pagos import *
+from django.contrib.auth.models import User, Group
+from rest_framework import serializers
 
 from rest_framework import serializers
 
@@ -14,9 +16,10 @@ class DireccionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AcademiaSerializer(serializers.ModelSerializer):
+    direccion = DireccionSerializer(read_only=True)
     class Meta:
         model = Academia
-        fields = '__all__'
+        fields = ['id', 'nombre', 'telefono', 'direccion']
 
 class CursoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,3 +85,17 @@ class ComprobantePagoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComprobantePago
         fields = '__all__'
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
+
+class UserSerializer(serializers.ModelSerializer):
+    groups = GroupSerializer(many=True, read_only=True)
+    # Si quieres permitir escritura de grupos, ajusta según tu necesidad
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'is_active', 'groups']

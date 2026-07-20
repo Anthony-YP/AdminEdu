@@ -5,13 +5,12 @@ from rest_framework.response import Response
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.AcademiaService import AcademiaService
 from gestion_academica.api.serializers import AcademiaSerializer
+from gestion_academica.serializers.AcademiaSerializer import AcademiaCreateSerializer
 from usuarios.permissions import EsDirector
 
 class AcademiaViewSet(
     PermisosViewSet
 ):
-
-    serializer_class = AcademiaSerializer
 
     permission_create = EsDirector
 
@@ -24,6 +23,18 @@ class AcademiaViewSet(
     def get_queryset(self):
 
         return AcademiaService.listar_academias()
+
+    def get_serializer_class(self):
+
+        if self.action in [
+            "create",
+            "update",
+            "partial_update"
+        ]:
+
+            return AcademiaCreateSerializer
+
+        return AcademiaSerializer
 
     def create(
         self,
@@ -43,10 +54,28 @@ class AcademiaViewSet(
         academia = AcademiaService.crear_academia(
             nombre=serializer.validated_data[
                 "nombre"
-            ]
+            ],
+            telefono=serializer.validated_data[
+                "telefono"
+            ],
+            ciudad=serializer.validated_data[
+                "ciudad"
+            ],
+            calle_principal=serializer.validated_data[
+                "calle_principal"
+            ],
+            calle_secundaria=serializer.validated_data[
+                "calle_secundaria"
+            ],
+            numero_casa=serializer.validated_data.get(
+                "numero_casa", ""
+            ),
+            referencia=serializer.validated_data.get(
+                "referencia", ""
+            ),
         )
 
-        response_serializer = self.get_serializer(
+        response_serializer = AcademiaSerializer(
             academia
         )
 
@@ -69,8 +98,7 @@ class AcademiaViewSet(
 
         academia = self.get_object()
 
-        serializer = self.get_serializer(
-            academia,
+        serializer = AcademiaCreateSerializer(
             data=request.data,
             partial=partial
         )
@@ -84,10 +112,34 @@ class AcademiaViewSet(
             nombre=serializer.validated_data.get(
                 "nombre",
                 academia.nombre
-            )
+            ),
+            telefono=serializer.validated_data.get(
+                "telefono",
+                academia.telefono
+            ),
+            ciudad=serializer.validated_data.get(
+                "ciudad",
+                academia.direccion.ciudad if academia.direccion else ""
+            ),
+            calle_principal=serializer.validated_data.get(
+                "calle_principal",
+                academia.direccion.calle_principal if academia.direccion else ""
+            ),
+            calle_secundaria=serializer.validated_data.get(
+                "calle_secundaria",
+                academia.direccion.calle_secundaria if academia.direccion else ""
+            ),
+            numero_casa=serializer.validated_data.get(
+                "numero_casa",
+                academia.direccion.numero_casa if academia.direccion else ""
+            ),
+            referencia=serializer.validated_data.get(
+                "referencia",
+                academia.direccion.referencia if academia.direccion else ""
+            ),
         )
 
-        response_serializer = self.get_serializer(
+        response_serializer = AcademiaSerializer(
             academia
         )
 

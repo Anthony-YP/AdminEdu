@@ -1,6 +1,5 @@
 from django.db import models
 
-from persona.Persona import Persona
 from ..academia.Academia import Paralelo
 from ..matricula.estado_matricula import EstadoMatricula
 from ..pagos.Pagos import ComprobantePago
@@ -9,7 +8,7 @@ from ..persona.Persona import Estudiante
 
 class CalificacionFinal(models.Model):
 
-    nota_final = models.DecimalField(max_digits=4,decimal_places=2)
+    nota_final = models.DecimalField(max_digits=2,decimal_places=2)
     aprobado = models.BooleanField(default=False)
     fecha_registro = models.DateField()
 
@@ -18,7 +17,7 @@ class CalificacionFinal(models.Model):
         verbose_name = "calificacion final"
         verbose_name_plural = "calificaciones finales"
 
-    def __str__(self):
+    def _str_(self):
         return (
             f"{self.nota_final}"
         )
@@ -58,22 +57,18 @@ class Matricula(models.Model):
         choices=EstadoMatricula.choices,
         default=EstadoMatricula.PENDIENTE
     )
-    comentario = models.TextField(
-        null=True,
-        blank=True
-    )
 
     class Meta:
         db_table = "matricula"
         verbose_name = "matricula"
         verbose_name_plural = "Matriculas"
 
-    def __str__(self):
+    def _str_(self):
         return (
-            f"{self.estudiante.persona.nombres + " " + self.estudiante.persona.apellidos} | "
+            f"{self.estudiante.persona.nombre + self.estudiante.persona.apellido} | "
             f"{self.estado} | "
             f"{self.fecha_solicitud} |" 
-            f"{self.calificacion_final.nota_final if self.calificacion_final else 'No tiene la nota del curso aun asignada'}"
+            f"{self.calificacion_final.CalificacionFinal.nota_final} |"
         )
 class Asistencia(models.Model):
 
@@ -86,7 +81,7 @@ class Asistencia(models.Model):
     fecha = models.DateField()
     presente = models.BooleanField(default=False)
 
-    def __str__(self):
+    def _str_(self):
         return (
             f"{'Presente' if self.presente else 'Ausente'}"
         )
