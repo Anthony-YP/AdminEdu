@@ -10,20 +10,30 @@ class PermisosViewSet(
     la configuración de permisos.
     """
 
-    permission_create = permissions.IsAuthenticated
+    permission_create = (
+        permissions.IsAuthenticated
+    )
 
-    permission_read = permissions.IsAuthenticated
+    permission_read = (
+        permissions.IsAuthenticated
+    )
 
-    permission_update = permissions.IsAuthenticated
+    permission_update = (
+        permissions.IsAuthenticated
+    )
 
-    permission_delete = permissions.IsAuthenticated
+    permission_delete = (
+        permissions.IsAuthenticated
+    )
+
+    permission_actions = {}
 
     def get_permissions(self):
 
-        if self.action in [
+        if self.action in (
             "list",
             "retrieve"
-        ]:
+        ):
 
             permission_class = (
                 self.permission_read
@@ -35,10 +45,10 @@ class PermisosViewSet(
                 self.permission_create
             )
 
-        elif self.action in [
+        elif self.action in (
             "update",
             "partial_update"
-        ]:
+        ):
 
             permission_class = (
                 self.permission_update
@@ -48,6 +58,16 @@ class PermisosViewSet(
 
             permission_class = (
                 self.permission_delete
+            )
+
+        elif self.action in (
+            self.permission_actions
+        ):
+
+            permission_class = (
+                self.permission_actions[
+                    self.action
+                ]
             )
 
         else:

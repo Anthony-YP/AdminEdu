@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-from gestion_academica.services.PersonaServices import PersonaService
+from gestion_academica.services.PersonaService import PersonaService
 
 
 class RepresentanteService(PersonaService):

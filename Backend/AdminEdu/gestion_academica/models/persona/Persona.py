@@ -4,7 +4,7 @@ from datetime import date
 from ..core.Core import Direccion
 from ..persona.Tipo_documento import Tipo_documento
 from usuarios.models import Usuario
-from gestion_academica.services.PersonaServices import PersonaService
+from gestion_academica.services.PersonaService import PersonaService
 
 class Persona(models.Model):
     usuario = models.OneToOneField(

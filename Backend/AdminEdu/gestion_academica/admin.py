@@ -6,7 +6,7 @@ from .models.persona.Persona import *
 from .models.matricula.Matricula import *
 from .models.notificaciones.Notificacion import *
 from .models.pagos.Pagos import *
-from .services.PersonaServices import PersonaService
+from .services.PersonaService import PersonaService
 
 admin.site.register(Direccion)
 admin.site.register(Academia)

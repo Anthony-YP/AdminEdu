@@ -14,8 +14,8 @@ class PersonaService:
 
         nombres = nombres.strip()
 
-        if len(nombres) < 2:
-            raise ValidationError("Los nombres deben tener al menos 2 caracteres.")
+        if len(nombres) < 3:
+            raise ValidationError("Los nombres deben tener al menos 3 caracteres.")
 
         if len(nombres) > 100:
             raise ValidationError("Los nombres no pueden superar los 100 caracteres.")
@@ -33,8 +33,8 @@ class PersonaService:
 
         apellidos = apellidos.strip()
 
-        if len(apellidos) < 2:
-            raise ValidationError("Los apellidos deben tener al menos 2 caracteres.")
+        if len(apellidos) < 3:
+            raise ValidationError("Los apellidos deben tener al menos 3 caracteres.")
 
         if len(apellidos) > 100:
             raise ValidationError("Los apellidos no pueden superar los 100 caracteres.")
