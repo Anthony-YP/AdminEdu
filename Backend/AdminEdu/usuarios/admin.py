@@ -6,4 +6,10 @@ from .models import Usuario
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    pass
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'password1', 'password2', 'groups'),
+        }),
+    )
+    filter_horizontal = ('groups', 'user_permissions')
