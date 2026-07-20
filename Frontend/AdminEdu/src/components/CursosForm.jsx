@@ -1,676 +1,192 @@
-import {
-    useEffect,
-    useState
-} from "react";
-
-import {
-    useNavigate
-} from "react-router-dom";
-
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/api";
-
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Input";
+import { Select } from "./ui/Select";
+import { Alert } from "./ui/Alert";
 
 export default function CursosForm() {
-
     const navigate = useNavigate();
+    const { id } = useParams();
+    const isEditing = !!id;
 
-
-    const [
-        academias,
-        setAcademias
-    ] = useState([]);
-
-
-    const [
-        formData,
-        setFormData
-    ] = useState({
-
+    const [academias, setAcademias] = useState([]);
+    const [loadingInit, setLoadingInit] = useState(true);
+    
+    const [formData, setFormData] = useState({
         academia: "",
-
         nombre: "",
-
         precio: "",
-
         fecha_inicio: "",
-
         fecha_fin: ""
-
     });
 
-
-    const [
-        loading,
-        setLoading
-    ] = useState(true);
-
-
-    const [
-        submitting,
-        setSubmitting
-    ] = useState(false);
-
-
-    const [
-        error,
-        setError
-    ] = useState("");
-
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
     useEffect(() => {
+        const initialize = async () => {
+            try {
+                // Cargar Academias (requerido para el Select)
+                const resAcademias = await api.get("/academias/");
+                setAcademias(resAcademias.data);
 
-        cargarAcademias();
+                // Si estamos en modo edición, cargar el curso
+                if (isEditing) {
+                    const resCurso = await api.get(`/cursos/${id}/`);
+                    setFormData({
+                        academia: resCurso.data.academia,
+                        nombre: resCurso.data.nombre,
+                        precio: resCurso.data.precio,
+                        fecha_inicio: resCurso.data.fecha_inicio,
+                        fecha_fin: resCurso.data.fecha_fin
+                    });
+                }
+            } catch (err) {
+                console.error("Error al inicializar formulario:", err);
+                setError("Error al cargar los datos necesarios.");
+            } finally {
+                setLoadingInit(false);
+            }
+        };
 
-    }, []);
+        initialize();
+    }, [id, isEditing]);
 
-
-    const cargarAcademias = async () => {
-
-        try {
-
-            const response =
-                await api.get(
-                    "/academia/"
-                );
-
-
-            setAcademias(
-                response.data
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Error al cargar academias:",
-                error
-            );
-
-
-            setError(
-                "No se pudieron cargar las academias."
-            );
-
-
-        } finally {
-
-            setLoading(false);
-
-        }
-
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-
-    const handleChange = (
-        event
-    ) => {
-
-        const {
-            name,
-            value
-        } = event.target;
-
-
-        setFormData(
-            previousData => ({
-
-                ...previousData,
-
-                [name]: value
-
-            })
-        );
-
-    };
-
-
-    const handleSubmit = async (
-        event
-    ) => {
-
-        event.preventDefault();
-
-
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setError("");
 
-
-        if (
-            formData.fecha_inicio
-            >=
-            formData.fecha_fin
-        ) {
-
-            setError(
-                "La fecha de finalización debe ser posterior a la fecha de inicio."
-            );
-
-
+        if (formData.fecha_inicio >= formData.fecha_fin) {
+            setError("La fecha de finalización debe ser posterior a la fecha de inicio.");
             return;
-
         }
-
 
         try {
-
             setSubmitting(true);
+            const payload = {
+                academia: Number(formData.academia),
+                nombre: formData.nombre.trim(),
+                precio: formData.precio,
+                fecha_inicio: formData.fecha_inicio,
+                fecha_fin: formData.fecha_fin
+            };
 
-
-            await api.post(
-                "/curso/",
-                {
-
-                    academia:
-                        Number(
-                            formData.academia
-                        ),
-
-                    nombre:
-                        formData.nombre,
-
-                    precio:
-                        formData.precio,
-
-                    fecha_inicio:
-                        formData.fecha_inicio,
-
-                    fecha_fin:
-                        formData.fecha_fin
-
-                }
-            );
-
-
-            navigate(
-                "/cursos"
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "Error al crear el curso:",
-                error
-            );
-
-
-            if (
-                error.response?.data
-            ) {
-
-                setError(
-                    JSON.stringify(
-                        error.response.data
-                    )
-                );
-
+            if (isEditing) {
+                await api.put(`/cursos/${id}/`, payload);
             } else {
-
-                setError(
-                    "No se pudo crear el curso."
-                );
-
+                await api.post("/cursos/", payload);
             }
-
-
+            navigate("/cursos");
+        } catch (err) {
+            console.error("Error al guardar el curso:", err);
+            
+            // Extraer mensaje de error de validación de Django REST Framework
+            if (err.response?.data) {
+                const data = err.response.data;
+                const fieldErrors = Object.keys(data).map(key => {
+                    const msgs = Array.isArray(data[key]) ? data[key].join(", ") : data[key];
+                    return `${key}: ${msgs}`;
+                });
+                setError(fieldErrors.join(" | "));
+            } else {
+                setError("Ocurrió un error inesperado al guardar el curso.");
+            }
         } finally {
-
             setSubmitting(false);
-
         }
-
     };
 
-
-    if (loading) {
-
+    if (loadingInit) {
         return (
-
-            <div
-                className="
-                    flex
-                    justify-center
-                    items-center
-                    h-64
-                "
-            >
-
-                Cargando academias...
-
+            <div className="flex justify-center items-center h-64">
+                <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
             </div>
-
         );
-
     }
 
-
     return (
+        <div className="max-w-2xl mx-auto animate-slideDown">
+            <Card>
+                <CardHeader>
+                    <CardTitle>{isEditing ? "Editar Curso" : "Nuevo Curso"}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {error && <Alert variant="error" className="mb-6">{error}</Alert>}
 
-        <div
-            className="
-                max-w-2xl
-                mx-auto
-                px-4
-                py-8
-            "
-        >
-
-            <div
-                className="
-                    bg-white
-                    rounded-xl
-                    shadow
-                    p-6
-                "
-            >
-
-                <h1 className="text-3xl font-bold text-slate-800">
-                    📚 Crear Nuevo Curso
-                </h1>
-
-                <p className="text-gray-500 mt-2">
-                    Complete la información para registrar un nuevo curso.
-                </p>
-
-
-                {
-                    error && (
-
-                        <div
-                            className="
-                                bg-red-100
-                                border
-                                border-red-400
-                                text-red-700
-                                px-4
-                                py-3
-                                rounded-lg
-                                mb-4
-                            "
-                        >
-
-                            {error}
-
-                        </div>
-
-                    )
-
-                }
-
-
-                <form
-
-                    onSubmit={
-                        handleSubmit
-                    }
-
-                    className="
-                        space-y-5
-                    "
-                >
-
-                    <div>
-
-                        <label
-                            className="
-                                block
-                                text-sm
-                                font-medium
-                                text-gray-700
-                                mb-1
-                            "
-                        >
-
-                            Academia
-
-                        </label>
-
-
-                        <select
-
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <Select
+                            label="Academia"
                             name="academia"
-
-                            value={
-                                formData.academia
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            value={formData.academia}
+                            onChange={handleChange}
                             required
+                            options={academias.map(a => ({ value: a.id, label: a.nombre }))}
+                        />
 
-                            className="
-                                w-full
-                                border
-                                border-gray-300
-                                rounded-lg
-                                px-3
-                                py-2
-                            "
-                        >
-
-                            <option
-                                value=""
-                            >
-
-                                Seleccione una academia
-
-                            </option>
-
-
-                            {
-                                academias.map(
-                                    academia => (
-
-                                        <option
-
-                                            key={
-                                                academia.id
-                                            }
-
-                                            value={
-                                                academia.id
-                                            }
-                                        >
-
-                                            {
-                                                academia.nombre
-                                            }
-
-                                        </option>
-
-                                    )
-                                )
-                            }
-
-                        </select>
-
-                    </div>
-
-
-                    <div>
-
-                        <label
-                            className="
-                                block
-                                text-sm
-                                font-medium
-                                text-gray-700
-                                mb-1
-                            "
-                        >
-
-                            Nombre del curso
-
-                        </label>
-
-
-                        <input
-
-                            type="text"
-
+                        <Input
+                            label="Nombre del curso"
                             name="nombre"
-
-                            value={
-                                formData.nombre
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
+                            type="text"
+                            value={formData.nombre}
+                            onChange={handleChange}
                             required
-
-                            className="
-                                w-full
-                                border
-                                border-gray-300
-                                rounded-lg
-                                px-3
-                                py-2
-                            "
-
-                            placeholder="
-                                Ej: Programación Web
-                            "
-
+                            placeholder="Ej: Programación Web"
                         />
 
-                    </div>
-
-
-                    <div>
-
-                        <label
-                            className="
-                                block
-                                text-sm
-                                font-medium
-                                text-gray-700
-                                mb-1
-                            "
-                        >
-
-                            Precio
-
-                        </label>
-
-
-                        <input
-
-                            type="number"
-
+                        <Input
+                            label="Precio"
                             name="precio"
-
-                            value={
-                                formData.precio
-                            }
-
-                            onChange={
-                                handleChange
-                            }
-
-                            required
-
+                            type="number"
                             min="0"
-
                             step="0.01"
-
-                            className="
-                                w-full
-                                border
-                                border-gray-300
-                                rounded-lg
-                                px-3
-                                py-2
-                            "
-
+                            value={formData.precio}
+                            onChange={handleChange}
+                            required
                             placeholder="0.00"
-
                         />
 
-                    </div>
-
-
-                    <div
-                        className="
-                            grid
-                            grid-cols-1
-                            md:grid-cols-2
-                            gap-4
-                        "
-                    >
-
-                        <div>
-
-                            <label
-                                className="
-                                    block
-                                    text-sm
-                                    font-medium
-                                    text-gray-700
-                                    mb-1
-                                "
-                            >
-
-                                Fecha de inicio
-
-                            </label>
-
-
-                            <input
-
-                                type="date"
-
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <Input
+                                label="Fecha de inicio"
                                 name="fecha_inicio"
-
-                                value={
-                                    formData.fecha_inicio
-                                }
-
-                                onChange={
-                                    handleChange
-                                }
-
-                                required
-
-                                className="
-                                    w-full
-                                    border
-                                    border-gray-300
-                                    rounded-lg
-                                    px-3
-                                    py-2
-                                "
-
-                            />
-
-                        </div>
-
-
-                        <div>
-
-                            <label
-                                className="
-                                    block
-                                    text-sm
-                                    font-medium
-                                    text-gray-700
-                                    mb-1
-                                "
-                            >
-
-                                Fecha de finalización
-
-                            </label>
-
-
-                            <input
-
                                 type="date"
-
-                                name="fecha_fin"
-
-                                value={
-                                    formData.fecha_fin
-                                }
-
-                                onChange={
-                                    handleChange
-                                }
-
+                                value={formData.fecha_inicio}
+                                onChange={handleChange}
                                 required
-
-                                className="
-                                    w-full
-                                    border
-                                    border-gray-300
-                                    rounded-lg
-                                    px-3
-                                    py-2
-                                "
-
                             />
 
+                            <Input
+                                label="Fecha de finalización"
+                                name="fecha_fin"
+                                type="date"
+                                value={formData.fecha_fin}
+                                onChange={handleChange}
+                                required
+                            />
                         </div>
 
-                    </div>
-
-
-                    <div
-                        className="
-                            flex
-                            justify-end
-                            gap-3
-                            pt-4
-                        "
-                    >
-
-                        <button
-
-                            type="button"
-
-                            onClick={() =>
-                                navigate(
-                                    "/cursos"
-                                )
-                            }
-
-                            className="
-                                px-4
-                                py-2
-                                rounded-lg
-                                border
-                                border-gray-300
-                                text-gray-700
-                                hover:bg-gray-100
-                            "
-                        >
-
-                            Cancelar
-
-                        </button>
-
-
-                        <button
-
-                            type="submit"
-
-                            disabled={
-                                submitting
-                            }
-
-                            className="
-                                px-4
-                                py-2
-                                rounded-lg
-                                bg-blue-600
-                                text-white
-                                hover:bg-blue-700
-                                disabled:opacity-50
-                            "
-                        >
-
-                            {
-
-                                submitting
-
-                                    ? "Guardando..."
-
-                                    : "Crear Curso"
-
-                            }
-
-                        </button>
-
-                    </div>
-
-                </form>
-
-            </div>
-
+                        <div className="flex justify-end gap-3 pt-6 border-t mt-8">
+                            <Button type="button" variant="secondary" onClick={() => navigate("/cursos")} disabled={submitting}>
+                                Cancelar
+                            </Button>
+                            <Button type="submit" variant="primary" isLoading={submitting}>
+                                {isEditing ? "Guardar Cambios" : "Crear Curso"}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
-
     );
-
 }

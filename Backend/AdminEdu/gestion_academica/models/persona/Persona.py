@@ -4,7 +4,7 @@ from datetime import date
 from ..core.Core import Direccion
 from ..persona.Tipo_documento import Tipo_documento
 from usuarios.models import Usuario
-from gestion_academica.services.PersonaService import PersonaService
+
 
 class Persona(models.Model):
     usuario = models.OneToOneField(
@@ -50,22 +50,6 @@ class Persona(models.Model):
             edad -= 1
 
         return edad
-    def clean(self):
-        """
-        Ejecuta las reglas de negocio antes de guardar una persona.
-        """
-        PersonaService.validar_persona(self)
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-def __str__(self):
-    return (
-        f"{self.nombres} "
-        f"{self.apellidos} "
-        f"({self.numero_identificacion})"
-    )
 
 "=================================== ADMINISTRACIÓN ====================================================="
 class Director(Persona):

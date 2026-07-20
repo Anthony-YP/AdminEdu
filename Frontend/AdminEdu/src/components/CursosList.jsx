@@ -19,7 +19,7 @@ export default function CursosList() {
         try {
 
             const response = await api.get(
-                "/curso/"
+                "/cursos/"
             );
 
             setCursos(
