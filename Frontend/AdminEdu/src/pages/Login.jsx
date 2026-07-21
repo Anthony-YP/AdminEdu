@@ -21,6 +21,28 @@ export default function Login() {
     const { user, isAuthenticated, login: loginUser } = useAuth();
     const navigate = useNavigate();
 
+    // ===== NUEVO: Leer errores de OAuth2 desde la URL =====
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const oauthError = params.get("oauth_error");
+        if (oauthError === "not_registered") {
+            setError({
+                mensaje: "Esta cuenta de Google no está registrada en el sistema. Contacte al administrador.",
+                tipo: "warning"
+            });
+        } else if (oauthError === "access_denied") {
+            setError({
+                mensaje: "Acceso denegado por Google. Intente nuevamente.",
+                tipo: "error"
+            });
+        }
+        // Limpiar parámetros de la URL para no mostrarlos al recargar
+        if (oauthError) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, []);
+    // ===== FIN NUEVO =====
+
     useEffect(() => {
         if (isAuthenticated) {
             navigate("/dashboard", { replace: true });
@@ -98,6 +120,13 @@ export default function Login() {
         }
     };
 
+    // ===== NUEVO: Función para redirigir a OAuth2 =====
+    const handleGoogleLogin = () => {
+        // Ajusta la URL base según tu backend (ej. http://localhost:8080)
+        window.location.href = "http://127.0.0.1:8000/api/auth/google/";
+    };
+    // ===== FIN NUEVO =====
+
     const errorStyles = {
         error: "bg-red-50/80 border-red-200 text-red-700 backdrop-blur-sm",
         warning: "bg-amber-50/80 border-amber-200 text-amber-700 backdrop-blur-sm",
@@ -123,7 +152,7 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-blue-950 via-blue-900 to-slate-900">
             {/* Fondo con partículas / patrón */}
             <div className="absolute inset-0 opacity-30">
                 <div className="absolute inset-0" style={{
@@ -136,15 +165,15 @@ export default function Login() {
                 }} />
             </div>
 
-            {/* Círculos decorativos flotantes */}
-            <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+            {/* Círculos decorativos flotantes - Ahora en tonos azules */}
+            <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-3xl" />
 
             <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white/5 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden relative z-10">
-                {/* Panel izquierdo - Branding e ilustración */}
-                <div className="hidden lg:flex flex-col justify-center items-center p-12 bg-gradient-to-br from-purple-600/30 to-indigo-600/30 backdrop-blur-sm relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-indigo-600/10" />
+                {/* Panel izquierdo - Branding e ilustración - ahora azul */}
+                <div className="hidden lg:flex flex-col justify-center items-center p-12 bg-gradient-to-br from-blue-800/30 to-indigo-800/30 backdrop-blur-sm relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-800/10 to-indigo-800/10" />
 
                     <div className="relative z-10 text-center">
                         <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-8 border border-white/20 shadow-2xl">
@@ -153,7 +182,7 @@ export default function Login() {
                             </svg>
                         </div>
                         <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">AdminEdu</h1>
-                        <p className="text-purple-200 text-lg max-w-sm mx-auto">Sistema de Gestión Académica</p>
+                        <p className="text-blue-200 text-lg max-w-sm mx-auto">Sistema de Gestión Académica</p>
 
                         <div className="mt-12 space-y-4 text-left max-w-xs mx-auto">
                             <div className="flex items-center gap-4 text-white/80">
@@ -204,7 +233,7 @@ export default function Login() {
                                         </svg>
                                     </div>
                                     <input
-                                        className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-white/40 transition-all duration-200"
+                                        className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/40 transition-all duration-200"
                                         type="text"
                                         placeholder="Ingrese su usuario"
                                         value={username}
@@ -227,7 +256,7 @@ export default function Login() {
                                         </svg>
                                     </div>
                                     <input
-                                        className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-white placeholder-white/40 transition-all duration-200"
+                                        className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/40 transition-all duration-200"
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Ingrese su contraseña"
                                         value={password}
@@ -273,8 +302,8 @@ export default function Login() {
 
                             <button
                                 className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 ${loading
-                                        ? "bg-purple-500/50 cursor-not-allowed"
-                                        : "bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 hover:shadow-lg hover:shadow-purple-500/30 active:scale-[0.98]"
+                                        ? "bg-blue-500/50 cursor-not-allowed"
+                                        : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.98]"
                                     }`}
                                 type="submit"
                                 disabled={loading}
@@ -297,6 +326,28 @@ export default function Login() {
                                 )}
                             </button>
                         </form>
+
+                        {/* ===== NUEVO: Separador y botón de Google ===== */}
+                        <div className="flex items-center my-6">
+                            <div className="flex-1 border-t border-white/10"></div>
+                            <span className="px-4 text-white/40 text-sm">o</span>
+                            <div className="flex-1 border-t border-white/10"></div>
+                        </div>
+
+                        <button
+                            onClick={handleGoogleLogin}
+                            className="w-full py-3 px-4 rounded-xl font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/20 hover:border-blue-400 transition-all duration-200 flex items-center justify-center gap-3"
+                            disabled={loading}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5">
+                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                            </svg>
+                            <span>Continuar con Google</span>
+                        </button>
+                        {/* ===== FIN NUEVO ===== */}
 
                         <div className="mt-8 pt-6 border-t border-white/10 text-center">
                             <p className="text-xs text-white/30">

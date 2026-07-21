@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!1h0)krz07gm=v%xqmr(!(^z@c%p=!268x+83%o2b!4%^pzmf9'
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # Application definition
@@ -41,7 +46,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'gestion_academica',
     'usuarios',
-    'corsheaders'
+    'corsheaders',
+    'django.contrib.sites',  # Requerido por allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'AdminEdu.urls'
@@ -136,8 +147,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-from datetime import timedelta
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -146,4 +155,45 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
-AUTH_USER_MODEL = "usuarios.Usuario"
+
+# Configuración de sitios (para allauth)
+SITE_ID = 1
+
+# Backends de autenticación
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # login tradicional
+    'allauth.account.auth_backends.AuthenticationBackend',  # login social
+)
+
+# Configuración del proveedor Google
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        "APP": {
+            "client_id": config("GOOGLE_CLIENT_ID"),
+            "secret": config("GOOGLE_CLIENT_SECRET"),
+            "key": ""
+        },
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+    }
+}
+
+# URLs de redirección (para OAuth2)
+
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
+
+
+AUTH_USER_MODEL = 'usuarios.Usuario'
+ACCOUNT_ADAPTER = 'usuarios.adapters.AdminEduAccountAdapter'
+
+
+FRONTEND_URL = config(
+    "FRONTEND_URL",
+    default="http://localhost:5173"
+)
