@@ -4,6 +4,10 @@ import api from "../api/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+<<<<<<< HEAD
+=======
+import { Select } from "../components/ui/Select";
+>>>>>>> origin/develop
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
 
@@ -13,6 +17,10 @@ export default function Cursos() {
 
     // Estado principal
     const [cursos, setCursos] = useState([]);
+<<<<<<< HEAD
+=======
+    const [academias, setAcademias] = useState([]);
+>>>>>>> origin/develop
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -21,6 +29,10 @@ export default function Cursos() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [formData, setFormData] = useState({
         id: null,
+<<<<<<< HEAD
+=======
+        academia: "",
+>>>>>>> origin/develop
         nombre: "",
         precio: "",
         fecha_inicio: "",
@@ -34,9 +46,16 @@ export default function Cursos() {
     const [cursoToDelete, setCursoToDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
+<<<<<<< HEAD
     // Cargar cursos al montar
     useEffect(() => {
         cargarCursos();
+=======
+    // Cargar cursos y academias al montar
+    useEffect(() => {
+        cargarCursos();
+        cargarAcademias();
+>>>>>>> origin/develop
     }, []);
 
     // Auto‑limpiar mensajes de éxito/error
@@ -66,6 +85,7 @@ export default function Cursos() {
         }
     };
 
+<<<<<<< HEAD
     const extraerMensajeError = (err) => {
         if (err.response?.data) {
             const data = err.response.data;
@@ -82,6 +102,34 @@ export default function Cursos() {
         return "Ocurrió un error inesperado.";
     };
 
+=======
+    const cargarAcademias = async () => {
+        try {
+            const response = await api.get("/academias/");
+            setAcademias(response.data || []);
+        } catch (err) {
+            console.error("Error al cargar academias:", err);
+            setError("No se pudieron cargar las academias. Intente nuevamente.");
+        }
+    };
+
+    const extraerMensajeError = (err) => {
+        if (err.response?.data) {
+            const data = err.response.data;
+            if (typeof data === 'object' && !data.detail) {
+                return Object.keys(data)
+                    .map((key) => {
+                        const msgs = Array.isArray(data[key]) ? data[key].join(", ") : data[key];
+                        return `${key}: ${msgs}`;
+                    })
+                    .join(" | ");
+            }
+            return data.detail || "Error en la operación.";
+        }
+        return "Ocurrió un error inesperado.";
+    };
+
+>>>>>>> origin/develop
     // ─── Formulario ────────────────────────────────────────────────────
 
     const handleOpenForm = (curso = null) => {
@@ -89,6 +137,10 @@ export default function Cursos() {
         if (curso) {
             setFormData({
                 id: curso.id,
+<<<<<<< HEAD
+=======
+                academia: curso.academia?.id ?? curso.academia ?? "",
+>>>>>>> origin/develop
                 nombre: curso.nombre || "",
                 precio: curso.precio ?? "",
                 fecha_inicio: curso.fecha_inicio || "",
@@ -97,6 +149,10 @@ export default function Cursos() {
         } else {
             setFormData({
                 id: null,
+<<<<<<< HEAD
+=======
+                academia: "",
+>>>>>>> origin/develop
                 nombre: "",
                 precio: "",
                 fecha_inicio: "",
@@ -121,6 +177,13 @@ export default function Cursos() {
         setFormError("");
 
         // Validaciones
+<<<<<<< HEAD
+=======
+        if (!formData.academia) {
+            setFormError("Debe seleccionar una academia.");
+            return;
+        }
+>>>>>>> origin/develop
         if (!formData.nombre.trim()) {
             setFormError("El nombre del curso es requerido.");
             return;
@@ -145,6 +208,10 @@ export default function Cursos() {
         try {
             setSubmitting(true);
             const payload = {
+<<<<<<< HEAD
+=======
+                academia: Number(formData.academia),
+>>>>>>> origin/develop
                 nombre: formData.nombre.trim(),
                 precio: parseFloat(formData.precio),
                 fecha_inicio: formData.fecha_inicio,
@@ -412,6 +479,23 @@ export default function Cursos() {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="sm:col-span-2">
+<<<<<<< HEAD
+=======
+                                    <Select
+                                        label="Academia"
+                                        name="academia"
+                                        value={formData.academia}
+                                        onChange={handleChange}
+                                        required
+                                        options={academias.map((academia) => ({
+                                            value: academia.id,
+                                            label: academia.nombre,
+                                        }))}
+                                        placeholder="Selecciona una academia"
+                                    />
+                                </div>
+                                <div className="sm:col-span-2">
+>>>>>>> origin/develop
                                     <Input
                                         label="Nombre del Curso"
                                         name="nombre"
