@@ -18,5 +18,3 @@ router.register("docentes", DocenteViewSet, basename="docentes")
 
 
 urlpatterns = router.urls
-path('admin/', admin.site.urls),
-path('api/', include('usuarios.urls')),

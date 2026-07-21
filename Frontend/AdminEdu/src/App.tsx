@@ -12,6 +12,8 @@ import Usuarios from "./pages/Usuarios";
 import Academias from "./pages/Academias";
 import Paralelos from "./pages/Paralelos";
 
+import OAuthCallback from './pages/OAuthCallback';
+
 function App() {
     return (
         <AuthProvider>
@@ -46,6 +48,12 @@ function App() {
                                                 
                                                 {/* Usuarios */}
                                                 <Route path="/usuarios" element={<ProtectedRoute allowedGroups={['Director']}><Usuarios /></ProtectedRoute>} />
+
+                                                <Route path="/oauth-callback" element={<OAuthCallback />} />
+
+
+
+
                                             </Routes>
                                         </div>
                                     </main>

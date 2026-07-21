@@ -15,10 +15,7 @@ export default function Paralelos() {
     // Estado principal
     const [paralelos, setParalelos] = useState([]);
     const [cursos, setCursos] = useState([]);
-<<<<<<< HEAD
-=======
     const [docentes, setDocentes] = useState([]);
->>>>>>> origin/develop
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -65,14 +62,6 @@ export default function Paralelos() {
         try {
             setLoading(true);
             setError("");
-<<<<<<< HEAD
-            const [resParalelos, resCursos] = await Promise.all([
-                api.get("/paralelos/"),
-                api.get("/cursos/")
-            ]);
-            setParalelos(resParalelos.data);
-            setCursos(resCursos.data);
-=======
             const [resParalelos, resCursos, resDocentes] = await Promise.all([
                 api.get("/paralelos/"),
                 api.get("/cursos/"),
@@ -81,7 +70,6 @@ export default function Paralelos() {
             setParalelos(resParalelos.data);
             setCursos(resCursos.data);
             setDocentes(resDocentes.data || []);
->>>>>>> origin/develop
         } catch (err) {
             console.error("Error al cargar datos:", err);
             setError("No se pudieron cargar los paralelos o cursos.");
@@ -155,13 +143,8 @@ export default function Paralelos() {
             setFormError("Debe seleccionar un curso.");
             return;
         }
-<<<<<<< HEAD
-        if (!formData.docente || isNaN(Number(formData.docente)) || Number(formData.docente) <= 0) {
-            setFormError("El ID del docente debe ser un número válido.");
-=======
         if (!formData.docente) {
             setFormError("Debe seleccionar un docente.");
->>>>>>> origin/develop
             return;
         }
         if (!formData.nombre.trim()) {
@@ -324,13 +307,10 @@ export default function Paralelos() {
                                 // Buscar el nombre del curso para mostrarlo (opcional)
                                 const curso = cursos.find(c => c.id === paralelo.curso);
                                 const cursoNombre = curso ? curso.nombre : `ID ${paralelo.curso}`;
-<<<<<<< HEAD
-=======
                                 const docente = docentes.find(d => d.id === paralelo.docente);
                                 const docenteNombre = docente
                                     ? `${docente.nombres} ${docente.apellidos}`
                                     : `ID ${paralelo.docente}`;
->>>>>>> origin/develop
 
                                 return (
                                     <TableRow key={paralelo.id} className="hover:bg-gray-50/50 transition-colors">
@@ -339,11 +319,7 @@ export default function Paralelos() {
                                         </TableCell>
                                         <TableCell className="font-semibold text-gray-800">{paralelo.nombre}</TableCell>
                                         <TableCell className="text-gray-600">
-<<<<<<< HEAD
-                                            <Badge variant="gray">Docente ID: {paralelo.docente}</Badge>
-=======
                                             <Badge variant="gray">{docenteNombre}</Badge>
->>>>>>> origin/develop
                                         </TableCell>
                                         <TableCell>
                                             <div className="text-sm text-gray-900">{paralelo.dias_clase}</div>
@@ -408,20 +384,6 @@ export default function Paralelos() {
                                     required
                                     placeholder="Ej. A, B, Nocturno..."
                                 />
-<<<<<<< HEAD
-                                <Input
-                                    label="ID del Docente"
-                                    name="docente"
-                                    type="number"
-                                    min="1"
-                                    value={formData.docente}
-                                    onChange={handleChange}
-                                    required
-                                    placeholder="Ej. 1"
-                                />
-                                <p className="col-span-1 sm:col-span-2 text-xs text-gray-500 -mt-2 mb-2">
-                                    * Ingrese el ID numérico del Docente (consultar en el panel de administración).
-=======
                                 <Select
                                     label="Docente"
                                     name="docente"
@@ -436,7 +398,6 @@ export default function Paralelos() {
                                 />
                                 <p className="col-span-1 sm:col-span-2 text-xs text-gray-500 -mt-2 mb-2">
                                     * Selecciona el docente que impartirá el paralelo desde la lista registrada.
->>>>>>> origin/develop
                                 </p>
                             </div>
 
