@@ -1,7 +1,7 @@
 from rest_framework import permissions
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.models.notificaciones.Notificacion import Notificacion
-from gestion_academica.api.serializers import NotificacionSerializer
+from gestion_academica.serializers.NotificacionSerializer import NotificacionSerializer
 
 
 class NotificacionViewSet(PermisosViewSet):

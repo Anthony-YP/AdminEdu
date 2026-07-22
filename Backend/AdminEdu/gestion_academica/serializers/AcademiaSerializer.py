@@ -1,69 +1,58 @@
 from rest_framework import serializers
 
 from gestion_academica.models.academia.Academia import Academia
+from gestion_academica.serializers.DireccionSerializer import DireccionSerializer
 
 
-class AcademiaSerializer(
-    serializers.ModelSerializer
-):
+class AcademiaSerializer(serializers.ModelSerializer):
+    """
+    Serializer encargado de validar la información
+    de una academia.
+    """
+
+    direccion = DireccionSerializer()
 
     class Meta:
-
         model = Academia
+        fields = (
+            "id",
+            "nombre",
+            "telefono",
+            "direccion",
+        )
+        read_only_fields = ("id",)
 
-        fields = [
-            "nombre"
-        ]
+    def validate_nombre(self, value):
+        value = value.strip()
 
-        extra_kwargs = {
-            "nombre": {
-                "required": True
-            }
-        }
+        if not value:
+            raise serializers.ValidationError(
+                "El nombre de la academia es obligatorio."
+            )
 
+        if len(value) < 3:
+            raise serializers.ValidationError(
+                "El nombre debe contener al menos 3 caracteres."
+            )
 
-class AcademiaCreateSerializer(
-    serializers.Serializer
-):
-    """
-    Serializer para crear/actualizar academias.
-    Incluye los campos de Direccion de forma plana.
-    """
+        return value
 
-    nombre = serializers.CharField(
-        max_length=100,
-        required=True
-    )
+    def validate_telefono(self, value):
+        value = value.strip()
 
-    telefono = serializers.CharField(
-        max_length=10,
-        required=True
-    )
+        if not value:
+            raise serializers.ValidationError(
+                "El teléfono es obligatorio."
+            )
 
-    ciudad = serializers.CharField(
-        max_length=25,
-        required=True
-    )
+        if not value.isdigit():
+            raise serializers.ValidationError(
+                "El teléfono solo puede contener números."
+            )
 
-    calle_principal = serializers.CharField(
-        max_length=50,
-        required=True
-    )
+        if len(value) != 10:
+            raise serializers.ValidationError(
+                "El teléfono debe tener exactamente 10 dígitos."
+            )
 
-    calle_secundaria = serializers.CharField(
-        max_length=50,
-        required=True
-    )
-
-    numero_casa = serializers.CharField(
-        max_length=10,
-        required=False,
-        allow_blank=True,
-        default=""
-    )
-
-    referencia = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        default=""
-    )
+        return value

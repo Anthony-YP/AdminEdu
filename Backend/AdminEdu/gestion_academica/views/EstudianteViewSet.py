@@ -2,8 +2,7 @@ from rest_framework import permissions
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.EstudianteService import EstudianteService
-from gestion_academica.api.serializers import EstudianteSerializer
-from gestion_academica.serializers.EstudianteSerializer import (EstudianteCreateSerializer,)
+from gestion_academica.serializers.EstudianteSerializer import (EstudianteSerializer,EstudianteCreateSerializer, )
 
 
 class EstudianteViewSet(

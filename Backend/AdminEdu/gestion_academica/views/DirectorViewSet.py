@@ -2,8 +2,8 @@ from rest_framework import permissions
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.DirectorService import DirectorService
-from gestion_academica.api.serializers import DirectorSerializer
-from gestion_academica.serializers.DirectorSerializer import DirectorCreateSerializer
+
+from gestion_academica.serializers.DirectorSerializer import DirectorSerializer,DirectorCreateSerializer
 from usuarios.permissions import EsDirector
 
 

@@ -1,5 +1,5 @@
-from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from rest_framework.exceptions import ValidationError
 
 from gestion_academica.models.academia.Academia import Academia
 from gestion_academica.models.core.Core import Direccion
@@ -13,137 +13,117 @@ class AcademiaService:
     @staticmethod
     def listar_academias():
         """
-        Lista todas las academias registradas.
+        Retorna todas las academias con su dirección.
         """
 
-        return Academia.objects.select_related(
-            "direccion"
-        ).all().order_by(
-            "nombre"
+        return (
+            Academia.objects
+            .select_related("direccion")
+            .order_by("nombre")
         )
 
     @staticmethod
-    @transaction.atomic
-    def crear_academia(
-        nombre: str,
-        telefono: str,
-        ciudad: str,
-        calle_principal: str,
-        calle_secundaria: str,
-        numero_casa: str = "",
-        referencia: str = ""
-    ) -> Academia:
+    def obtener_academia(pk: int) -> Academia:
         """
-        Crea una academia con su dirección asociada,
-        aplicando las reglas de negocio.
+        Obtiene una academia por su id.
         """
 
-        if not nombre or not nombre.strip():
+        try:
+            return Academia.objects.select_related(
+                "direccion"
+            ).get(pk=pk)
+
+        except Academia.DoesNotExist:
             raise ValidationError(
-                "El nombre de la academia es obligatorio."
+                "La academia no existe."
             )
 
-        nombre = nombre.strip()
+    @staticmethod
+    @transaction.atomic
+    def crear_academia(validated_data: dict) -> Academia:
+        """
+        Crea una academia con su dirección.
+        """
 
-        academia_existente = Academia.objects.filter(
+        direccion_data = validated_data.pop("direccion")
+
+        nombre = validated_data["nombre"]
+
+        if Academia.objects.filter(
             nombre__iexact=nombre
-        ).exists()
-
-        if academia_existente:
+        ).exists():
             raise ValidationError(
                 "Ya existe una academia con ese nombre."
             )
 
-        if not telefono or not telefono.strip():
-            raise ValidationError(
-                "El teléfono de la academia es obligatorio."
-            )
-
-        if not ciudad or not ciudad.strip():
-            raise ValidationError(
-                "La ciudad es obligatoria."
-            )
-
-        if not calle_principal or not calle_principal.strip():
-            raise ValidationError(
-                "La calle principal es obligatoria."
-            )
-
-        if not calle_secundaria or not calle_secundaria.strip():
-            raise ValidationError(
-                "La calle secundaria es obligatoria."
-            )
-
-        # Crear la dirección primero
         direccion = Direccion.objects.create(
-            ciudad=ciudad.strip(),
-            calle_principal=calle_principal.strip(),
-            calle_secundaria=calle_secundaria.strip(),
-            numero_casa=numero_casa.strip() if numero_casa else "",
-            referencia=referencia.strip() if referencia else ""
+            **direccion_data
         )
 
-        return Academia.objects.create(
-            nombre=nombre,
-            telefono=telefono.strip(),
-            direccion=direccion
-        )
+        try:
+
+            academia = Academia.objects.create(
+                direccion=direccion,
+                **validated_data
+            )
+
+        except IntegrityError:
+            raise ValidationError(
+                "No fue posible crear la academia."
+            )
+
+        return academia
 
     @staticmethod
     @transaction.atomic
     def actualizar_academia(
         academia: Academia,
-        nombre: str,
-        telefono: str,
-        ciudad: str,
-        calle_principal: str,
-        calle_secundaria: str,
-        numero_casa: str = "",
-        referencia: str = ""
+        validated_data: dict
     ) -> Academia:
         """
-        Actualiza una academia y su dirección asociada,
-        aplicando las reglas de negocio.
+        Actualiza una academia y su dirección.
         """
 
-        if academia is None:
-            raise ValidationError(
-                "La academia no existe."
-            )
+        direccion_data = validated_data.pop(
+            "direccion",
+            None
+        )
 
-        if not nombre or not nombre.strip():
-            raise ValidationError(
-                "El nombre de la academia es obligatorio."
-            )
+        nombre = validated_data.get(
+            "nombre",
+            academia.nombre
+        )
 
-        nombre = nombre.strip()
-
-        academia_existente = Academia.objects.filter(
+        if Academia.objects.filter(
             nombre__iexact=nombre
         ).exclude(
             pk=academia.pk
-        ).exists()
-
-        if academia_existente:
+        ).exists():
             raise ValidationError(
                 "Ya existe otra academia con ese nombre."
             )
 
-        # Actualizar la academia
-        academia.nombre = nombre
-        academia.telefono = telefono.strip() if telefono else academia.telefono
-
-        # Actualizar la dirección asociada
-        direccion = academia.direccion
-        if direccion:
-            direccion.ciudad = ciudad.strip() if ciudad else direccion.ciudad
-            direccion.calle_principal = calle_principal.strip() if calle_principal else direccion.calle_principal
-            direccion.calle_secundaria = calle_secundaria.strip() if calle_secundaria else direccion.calle_secundaria
-            direccion.numero_casa = numero_casa.strip() if numero_casa else direccion.numero_casa
-            direccion.referencia = referencia.strip() if referencia else direccion.referencia
-            direccion.save()
+        for campo, valor in validated_data.items():
+            setattr(
+                academia,
+                campo,
+                valor
+            )
 
         academia.save()
+
+        if direccion_data:
+
+            direccion = academia.direccion
+
+            for campo, valor in direccion_data.items():
+                setattr(
+                    direccion,
+                    campo,
+                    valor
+                )
+
+            direccion.save()
 
         return academia
 
@@ -153,12 +133,17 @@ class AcademiaService:
         academia: Academia
     ):
         """
-        Elimina una academia aplicando las reglas de negocio.
+        Elimina una academia.
+
+        Regla de negocio:
+        No se puede eliminar una academia
+        que tenga cursos registrados.
         """
 
-        if academia is None:
+        if academia.cursos.exists():
             raise ValidationError(
-                "La academia no existe."
+                "No se puede eliminar una academia que posee cursos registrados."
             )
 
+        academia.direccion.delete()
         academia.delete()

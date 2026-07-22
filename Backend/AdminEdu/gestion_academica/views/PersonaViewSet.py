@@ -2,8 +2,7 @@ from rest_framework import permissions
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.PersonaService import PersonaService
-from gestion_academica.api.serializers import PersonaSerializer
-from gestion_academica.serializers.PersonaSerializer import PersonaCreateSerializer
+from gestion_academica.serializers.PersonaSerializer import PersonaSerializer, PersonaCreateSerializer
 
 
 class PersonaViewSet(PermisosViewSet):

@@ -2,8 +2,7 @@ from rest_framework import permissions
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.RepresentanteService import RepresentanteService
-from gestion_academica.api.serializers import RepresentanteSerializer
-from gestion_academica.serializers.RepresentanteSerializer import RepresentanteCreateSerializer
+from gestion_academica.serializers.RepresentanteSerializer import RepresentanteSerializer,RepresentanteCreateSerializer
 from usuarios.permissions import EsRepresentante
 
 

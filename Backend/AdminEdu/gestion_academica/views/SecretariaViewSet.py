@@ -2,8 +2,7 @@ from rest_framework import permissions
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.SecretariaService import SecretariaService
-from gestion_academica.api.serializers import SecretariaSerializer
-from gestion_academica.serializers.SecretariaSerializer import SecretariaCreateSerializer
+from gestion_academica.serializers.SecretariaSerializer import SecretariaSerializer, SecretariaCreateSerializer
 from usuarios.permissions import EsAdministrativo
 
 

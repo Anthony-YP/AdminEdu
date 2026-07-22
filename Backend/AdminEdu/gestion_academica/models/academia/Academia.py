@@ -1,5 +1,8 @@
+from django.core.validators import MinValueValidator
+
 from ..persona.Persona import Docente
-from .estado import Estado
+from .estado_paralelo import EstadoParalelo
+from .estado_curso import EstadoCurso
 from ..core.Core import Direccion
 from django.db import models
 
@@ -33,6 +36,12 @@ class Curso(models.Model):
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
 
+    estado = models.CharField(
+        max_length=15,
+        choices=EstadoCurso.choices,
+        default=EstadoCurso.ACTIVO
+    )
+
 
     def __str__(self):
         return (
@@ -55,19 +64,31 @@ class Paralelo(models.Model):
     docente = models.ForeignKey(
         Docente,
         on_delete=models.PROTECT,
-        related_name="paralelos"
+        related_name="paralelos",
+        null = True,
+        blank = True,
     )
 
     nombre = models.CharField(max_length=20)
-    dias_clase = models.CharField(max_length=50)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
-    cupo_max = models.PositiveIntegerField()
+    cupo_max = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+
+    DIAS_SEMANA = (
+        ("LUN", "Lunes"),
+        ("MAR", "Martes"),
+        ("MIE", "Miércoles"),
+        ("JUE", "Jueves"),
+        ("VIE", "Viernes"),
+        ("SAB", "Sábado"),
+        ("DOM", "Domingo"),
+    )
+    dias_clase = models.JSONField(default=list)
 
     estado = models.CharField(
-        max_length=10,
-        choices=Estado.choices,
-        default=Estado.ACTIVO
+        max_length=15,
+        choices=EstadoParalelo.choices,
+        default=EstadoParalelo.ACTIVO
     )
 
     def __str__(self):
