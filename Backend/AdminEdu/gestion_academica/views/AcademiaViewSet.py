@@ -1,48 +1,32 @@
-from rest_framework import permissions
-from rest_framework import status
+from rest_framework import permissions, status
 from rest_framework.response import Response
 
-from gestion_academica.views.CoreViewSet import PermisosViewSet
+from gestion_academica.models.academia.Academia import Academia
+from gestion_academica.serializers.AcademiaSerializer import AcademiaSerializer
 from gestion_academica.services.AcademiaService import AcademiaService
-from gestion_academica.api.serializers import AcademiaSerializer
-from gestion_academica.serializers.AcademiaSerializer import AcademiaCreateSerializer
-from usuarios.permissions import EsDirector
+from gestion_academica.views.CoreViewSet import PermisosViewSet
 
-class AcademiaViewSet(
-    PermisosViewSet
-):
 
-    permission_create = EsDirector
+class AcademiaViewSet(PermisosViewSet):
+    """
+    ViewSet encargado de exponer la API de Academias.
+    """
+
+    queryset = Academia.objects.select_related(
+        "direccion"
+    ).all()
+
+    serializer_class = AcademiaSerializer
 
     permission_read = permissions.IsAuthenticated
-
-    permission_update = EsDirector
-
-    permission_delete = EsDirector
+    permission_create = permissions.IsAuthenticated
+    permission_update = permissions.IsAuthenticated
+    permission_delete = permissions.IsAuthenticated
 
     def get_queryset(self):
-
         return AcademiaService.listar_academias()
 
-    def get_serializer_class(self):
-
-        if self.action in [
-            "create",
-            "update",
-            "partial_update"
-        ]:
-
-            return AcademiaCreateSerializer
-
-        return AcademiaSerializer
-
-    def create(
-        self,
-        request,
-        *args,
-        **kwargs
-    ):
-
+    def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(
             data=request.data
         )
@@ -52,55 +36,26 @@ class AcademiaViewSet(
         )
 
         academia = AcademiaService.crear_academia(
-            nombre=serializer.validated_data[
-                "nombre"
-            ],
-            telefono=serializer.validated_data[
-                "telefono"
-            ],
-            ciudad=serializer.validated_data[
-                "ciudad"
-            ],
-            calle_principal=serializer.validated_data[
-                "calle_principal"
-            ],
-            calle_secundaria=serializer.validated_data[
-                "calle_secundaria"
-            ],
-            numero_casa=serializer.validated_data.get(
-                "numero_casa", ""
-            ),
-            referencia=serializer.validated_data.get(
-                "referencia", ""
-            ),
+            serializer.validated_data
         )
 
-        response_serializer = AcademiaSerializer(
+        response = self.get_serializer(
             academia
         )
 
         return Response(
-            response_serializer.data,
+            response.data,
             status=status.HTTP_201_CREATED
         )
 
-    def update(
-        self,
-        request,
-        *args,
-        **kwargs
-    ):
-
-        partial = kwargs.pop(
-            "partial",
-            False
+    def update(self, request, *args, **kwargs):
+        academia = AcademiaService.obtener_academia(
+            kwargs["pk"]
         )
 
-        academia = self.get_object()
-
-        serializer = AcademiaCreateSerializer(
-            data=request.data,
-            partial=partial
+        serializer = self.get_serializer(
+            academia,
+            data=request.data
         )
 
         serializer.is_valid(
@@ -108,53 +63,46 @@ class AcademiaViewSet(
         )
 
         academia = AcademiaService.actualizar_academia(
-            academia=academia,
-            nombre=serializer.validated_data.get(
-                "nombre",
-                academia.nombre
-            ),
-            telefono=serializer.validated_data.get(
-                "telefono",
-                academia.telefono
-            ),
-            ciudad=serializer.validated_data.get(
-                "ciudad",
-                academia.direccion.ciudad if academia.direccion else ""
-            ),
-            calle_principal=serializer.validated_data.get(
-                "calle_principal",
-                academia.direccion.calle_principal if academia.direccion else ""
-            ),
-            calle_secundaria=serializer.validated_data.get(
-                "calle_secundaria",
-                academia.direccion.calle_secundaria if academia.direccion else ""
-            ),
-            numero_casa=serializer.validated_data.get(
-                "numero_casa",
-                academia.direccion.numero_casa if academia.direccion else ""
-            ),
-            referencia=serializer.validated_data.get(
-                "referencia",
-                academia.direccion.referencia if academia.direccion else ""
-            ),
+            academia,
+            serializer.validated_data
         )
 
-        response_serializer = AcademiaSerializer(
+        response = self.get_serializer(
             academia
         )
 
-        return Response(
-            response_serializer.data
+        return Response(response.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        academia = AcademiaService.obtener_academia(
+            kwargs["pk"]
         )
 
-    def destroy(
-        self,
-        request,
-        *args,
-        **kwargs
-    ):
+        serializer = self.get_serializer(
+            academia,
+            data=request.data,
+            partial=True
+        )
 
-        academia = self.get_object()
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        academia = AcademiaService.actualizar_academia(
+            academia,
+            serializer.validated_data
+        )
+
+        response = self.get_serializer(
+            academia
+        )
+
+        return Response(response.data)
+
+    def destroy(self, request, *args, **kwargs):
+        academia = AcademiaService.obtener_academia(
+            kwargs["pk"]
+        )
 
         AcademiaService.eliminar_academia(
             academia

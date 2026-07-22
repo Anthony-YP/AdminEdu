@@ -119,7 +119,18 @@ class Estudiante(Persona):
         Representante,
         on_delete=models.CASCADE,
         related_name="estudiantes",
+        null=True,
+        blank=True
     )
+
+    def clean(self):
+        super().clean()
+        from gestion_academica.services.EstudianteService import EstudianteService
+        EstudianteService.registrar_estudiante(self)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = "estudiante"
