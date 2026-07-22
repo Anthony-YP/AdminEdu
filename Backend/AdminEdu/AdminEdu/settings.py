@@ -156,6 +156,9 @@ SIMPLE_JWT = {
 }
 
 
+# Configuración de email (desarrollo: salida por consola)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # Configuración de sitios (para allauth)
 SITE_ID = 1
 
@@ -187,6 +190,13 @@ SOCIALACCOUNT_PROVIDERS = {
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_PASSWORD_RESET_TOKEN_GENERATOR = "allauth.account.forms.PasswordResetTokenGenerator"
+ACCOUNT_RATE_LIMITS = {
+    "password_reset": "5/hour",
+}
 
 
 AUTH_USER_MODEL = 'usuarios.Usuario'

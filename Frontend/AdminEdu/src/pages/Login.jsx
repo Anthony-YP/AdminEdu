@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { login } from "../api/auth";
 
@@ -282,6 +282,24 @@ export default function Login() {
                                         )}
                                     </button>
                                 </div>
+                            </div>
+
+                            {/* Enlaces de ayuda */}
+                            <div className="flex items-center justify-between mt-2">
+                                <Link
+                                    to="/register"
+                                    className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                >
+                                    ¿No tienes cuenta? Regístrate
+                                </Link>
+                                <a
+                                    href="http://127.0.0.1:8000/accounts/password/reset/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </a>
                             </div>
 
                             {error.mensaje && (

@@ -7,6 +7,7 @@ from gestion_academica.views.CursoViewSet import CursoViewSet
 from gestion_academica.views.ParaleloViewSet import ParaleloViewSet
 from gestion_academica.views.MatriculaViewSet import MatriculaViewSet
 from gestion_academica.views.DocenteViewSet import DocenteViewSet
+from gestion_academica.views.HomeView import home_info, cursos_disponibles
 
 router = DefaultRouter()
 
@@ -17,4 +18,7 @@ router.register("matriculas", MatriculaViewSet, basename="matriculas")
 router.register("docentes", DocenteViewSet, basename="docentes")
 
 
-urlpatterns = router.urls
+urlpatterns = [
+    path("home/", home_info, name="home-info"),
+    path("cursos-disponibles/", cursos_disponibles, name="cursos-disponibles"),
+] + router.urls
