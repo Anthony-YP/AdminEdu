@@ -11,6 +11,12 @@ import CursosForm from "./components/CursosForm";
 import Usuarios from "./pages/Usuarios";
 import Academias from "./pages/Academias";
 import Paralelos from "./pages/Paralelos";
+import Personas from "./pages/Personas";
+import EstudianteDashboard from "./pages/EstudianteDashboard";
+import EstudiantePerfil from "./pages/EstudiantePerfil";
+import EstudianteMatriculas from "./pages/EstudianteMatriculas";
+import EstudianteHistorial from "./pages/EstudianteHistorial";
+import EstudianteNotificaciones from "./pages/EstudianteNotificaciones";
 
 import OAuthCallback from './pages/OAuthCallback';
 
@@ -48,6 +54,12 @@ function App() {
                                                 
                                                 {/* Usuarios */}
                                                 <Route path="/usuarios" element={<ProtectedRoute allowedGroups={['Director']}><Usuarios /></ProtectedRoute>} />
+                                                <Route path="/personas" element={<ProtectedRoute allowedGroups={['Director', 'Secretaria', 'Docente', 'Representante']}><Personas /></ProtectedRoute>} />
+                                                <Route path="/estudiante-dashboard" element={<ProtectedRoute allowedGroups={['Estudiante']}><EstudianteDashboard /></ProtectedRoute>} />
+                                                <Route path="/estudiante-perfil" element={<ProtectedRoute allowedGroups={['Estudiante']}><EstudiantePerfil /></ProtectedRoute>} />
+                                                <Route path="/estudiante-matriculas" element={<ProtectedRoute allowedGroups={['Estudiante']}><EstudianteMatriculas /></ProtectedRoute>} />
+                                                <Route path="/estudiante-historial" element={<ProtectedRoute allowedGroups={['Estudiante']}><EstudianteHistorial /></ProtectedRoute>} />
+                                                <Route path="/estudiante-notificaciones" element={<ProtectedRoute allowedGroups={['Estudiante']}><EstudianteNotificaciones /></ProtectedRoute>} />
 
                                                 <Route path="/oauth-callback" element={<OAuthCallback />} />
 

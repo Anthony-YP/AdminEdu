@@ -36,6 +36,10 @@ class DocenteService(PersonaService, BaseService):
             raise ValidationError(
                 "El título es demasiado corto."
             )
+        if len(titulo.strip()) > 100:
+            raise ValidationError(
+                "El título no puede superar los 100 caracteres."
+            )
 
         return True
 
@@ -51,6 +55,10 @@ class DocenteService(PersonaService, BaseService):
             raise ValidationError(
                 "La especialidad es demasiado corta."
             )
+        if len(especialidad.strip()) > 100:
+            raise ValidationError(
+                "La especialidad no puede superar los 100 caracteres."
+            )
 
         return True
 
@@ -62,9 +70,9 @@ class DocenteService(PersonaService, BaseService):
     @staticmethod
     def registrar_asistencia(asistencia):
 
-        if asistencia is None:
+        if asistencia.matricula is None:
             raise ValidationError(
-                "La asistencia es obligatoria."
+                "La asistencia debe pertenecer a una matrícula."
             )
 
         return True
@@ -87,6 +95,10 @@ class DocenteService(PersonaService, BaseService):
         if calificacion.nota_final < 0 or calificacion.nota_final > 10:
             raise ValidationError(
                 "La nota debe estar entre 0 y 10."
+            )
+        if calificacion is None:
+            raise ValidationError(
+                "La calificación es obligatoria."
             )
 
         calificacion.aprobado = calificacion.nota_final >= 7

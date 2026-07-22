@@ -3,9 +3,10 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from gestion_academica.models.persona.Tipo_documento import Tipo_documento
+from gestion_academica.models.persona.Persona import Persona
 
 class PersonaService:
-    
+
     @staticmethod
     def validar_nombres(nombres: str):
 
@@ -151,3 +152,36 @@ class PersonaService:
         )
 
         return True
+
+    @staticmethod
+    def crear_persona(**datos):
+
+        persona = Persona(**datos)
+
+        PersonaService.validar_persona(persona)
+
+        persona.save()
+
+        return persona
+
+    @staticmethod
+    def actualizar_persona(persona, **datos):
+
+        for campo, valor in datos.items():
+            setattr(persona, campo, valor)
+
+        PersonaService.validar_persona(persona)
+
+        persona.save()
+
+        return persona
+
+    @staticmethod
+    def listar_personas():
+
+        return Persona.objects.all()
+
+    @staticmethod
+    def eliminar_persona(persona):
+
+        persona.delete()

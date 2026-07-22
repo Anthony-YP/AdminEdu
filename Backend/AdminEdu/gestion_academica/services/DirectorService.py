@@ -1,8 +1,10 @@
+
 from django.core.exceptions import ValidationError
-
+from gestion_academica.models.persona.Persona import Director
 from gestion_academica.services.PersonaService import PersonaService
+from gestion_academica.services.BaseService import BaseService
 
-class DirectorService(PersonaService):
+class DirectorService(PersonaService, BaseService):
 
     @staticmethod
     def registrar_director(director):
@@ -12,47 +14,32 @@ class DirectorService(PersonaService):
         return True
 
     @staticmethod
-    def actualizar_director(director):
+    def crear_director(**datos):
 
-        PersonaService.validar_persona(director)
+        director = Director(**datos)
 
-        return True
+        DirectorService.registrar_director(director)
 
-    @staticmethod
-    def dar_baja_estudiante(estudiante, motivo):
+        director.save()
 
-        if not motivo or not motivo.strip():
-            raise ValidationError(
-                "Debe ingresar el motivo de la baja del estudiante."
-            )
-
-        # Si el modelo incorpora posteriormente un campo estado,
-        # se podrá activar esta línea.
-        #
-        # estudiante.estado = "INACTIVO"
-
-        return True
+        return director
 
     @staticmethod
-    def visualizar_docentes():
+    def actualizar_director(director, **datos):
 
-        from gestion_academica.models.persona.Persona import Docente
+        for campo, valor in datos.items():
+            setattr(director, campo, valor)
 
-        return Docente.objects.all()
+        DirectorService.registrar_director(director)
 
-    @staticmethod
-    def visualizar_secretarias():
+        director.save()
 
-        from gestion_academica.models.persona.Persona import Secretaria
-
-        return Secretaria.objects.all()
+        return director
 
     @staticmethod
-    def visualizar_estudiantes():
+    def listar_directores():
 
-        from gestion_academica.models.persona.Persona import Estudiante
-
-        return Estudiante.objects.all()
+        return Director.objects.all()
 
     @staticmethod
     def visualizar_cursos():
@@ -62,8 +49,44 @@ class DirectorService(PersonaService):
         return Curso.objects.all()
 
     @staticmethod
-    def visualizar_paralelos():
+    def crear_paralelo(paralelo):
 
-        from gestion_academica.models.academia.Academia import Paralelo
+        if paralelo.cupo_max <= 0:
+            raise ValidationError(
+                "El cupo máximo debe ser mayor que cero."
+            )
 
-        return Paralelo.objects.all()
+        if paralelo.hora_inicio >= paralelo.hora_fin:
+            raise ValidationError(
+                "La hora de inicio debe ser menor que la hora de fin."
+            )
+
+        return True
+
+    @staticmethod
+    def validar_fechas_curso(curso):
+
+        if curso.fecha_inicio >= curso.fecha_fin:
+            raise ValidationError(
+                "La fecha de inicio debe ser anterior a la fecha de finalización."
+            )
+
+        return True
+
+    @staticmethod
+    def dar_baja_estudiante(
+        estudiante,
+        motivo
+    ):
+
+        if not motivo or not motivo.strip():
+
+            raise ValidationError(
+                "Debe ingresar el motivo de la baja."
+            )
+
+        if hasattr(estudiante, "estado"):
+
+            estudiante.estado = "INACTIVO"
+
+        return True

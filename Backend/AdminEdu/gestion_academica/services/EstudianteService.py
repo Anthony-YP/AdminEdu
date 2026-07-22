@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 
+from gestion_academica.models.persona.Persona import Estudiante
 from gestion_academica.services.PersonaService import PersonaService
+
 
 class EstudianteService(PersonaService):
 
@@ -9,65 +11,60 @@ class EstudianteService(PersonaService):
 
         PersonaService.validar_persona(estudiante)
 
-        return True
-
-    @staticmethod
-    def actualizar_estudiante(estudiante):
-        PersonaService.validar_persona(estudiante)
-
-        return True
-
-    @staticmethod
-    def validar_requisitos_matricula(estudiante):
-
-        # Si es menor de edad debe tener representante.
-        if PersonaService.es_menor_edad(estudiante.fecha_nacimiento):
-
-            if estudiante.representante is None:
-                raise ValidationError(
-                    "Los estudiantes menores de edad deben registrar un representante."
-                )
-
-        # Validar que el estudiante esté activo (si el modelo tiene estado).
-        if hasattr(estudiante, "estado"):
-
-            if str(estudiante.estado).upper() != "ACTIVO":
-                raise ValidationError(
-                    "Solo los estudiantes activos pueden solicitar una matrícula."
-                )
+        if (
+            PersonaService.es_menor_edad(
+                estudiante.fecha_nacimiento
+            )
+            and estudiante.representante_legal is None
+        ):
+            raise ValidationError(
+                "Los estudiantes menores de edad deben tener un representante legal."
+            )
 
         return True
 
     @staticmethod
-    def solicitar_matricula(estudiante):
-        PersonaService.validar_persona(estudiante)
+    def crear_estudiante(**datos):
 
-        EstudianteService.validar_requisitos_matricula(estudiante)
+        estudiante = Estudiante(**datos)
 
-        return True
+        EstudianteService.registrar_estudiante(
+            estudiante
+        )
 
-    @staticmethod
-    def registrar_representante(estudiante, representante):
+        estudiante.save()
 
-        estudiante.representante = representante
-
-        return True
-
-    @staticmethod
-    def visualizar_cursos():
-        return True
-
-    @staticmethod
-    def visualizar_historial():
-        return True
-
-    @staticmethod
-    def visualizar_perfil(estudiante):
         return estudiante
 
     @staticmethod
-    def editar_perfil(estudiante):
+    def actualizar_estudiante(
+        estudiante,
+        **datos
+    ):
 
-        PersonaService.validar_persona(estudiante)
+        for campo, valor in datos.items():
+            setattr(
+                estudiante,
+                campo,
+                valor
+            )
 
-        return True
+        EstudianteService.registrar_estudiante(
+            estudiante
+        )
+
+        estudiante.save()
+
+        return estudiante
+
+    @staticmethod
+    def listar_estudiantes():
+
+        return Estudiante.objects.all()
+
+    @staticmethod
+    def eliminar_estudiante(
+        estudiante
+    ):
+
+        estudiante.delete()

@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 
+from gestion_academica.models.persona.Persona import Secretaria
 from gestion_academica.services.PersonaService import PersonaService
 from gestion_academica.models.matricula.estado_matricula import EstadoMatricula
 from gestion_academica.services.MatriculaService import MatriculaService
@@ -16,11 +17,32 @@ class SecretariaService(PersonaService, BaseService):
         return True
 
     @staticmethod
-    def actualizar_secretaria(secretaria):
+    def crear_secretaria(**datos):
 
-        PersonaService.validar_persona(secretaria)
+        secretaria = Secretaria(**datos)
 
-        return True
+        SecretariaService.registrar_secretaria(secretaria)
+
+        secretaria.save()
+
+        return secretaria
+
+    @staticmethod
+    def actualizar_secretaria(secretaria, **datos):
+
+        for campo, valor in datos.items():
+            setattr(secretaria, campo, valor)
+
+        SecretariaService.registrar_secretaria(secretaria)
+
+        secretaria.save()
+
+        return secretaria
+
+    @staticmethod
+    def listar_secretarias():
+
+        return Secretaria.objects.all()
 
     @staticmethod
     def visualizar_matriculas_pendientes():
@@ -36,24 +58,41 @@ class SecretariaService(PersonaService, BaseService):
 
         if matricula.comprobante_pago is None:
             raise ValidationError(
-                "La matrícula no posee un comprobante registrado."
+                "La matrícula no posee un comprobante de pago registrado."
             )
 
         return matricula.comprobante_pago
 
     @staticmethod
-    def aprobar_matricula(matricula):
+    def aprobar_matricula(matricula, comentario=""):
 
-        MatriculaService.aprobar_matricula(matricula)
+        if matricula.estado != EstadoMatricula.PENDIENTE:
+            raise ValidationError(
+                "Solo se pueden aprobar matrículas pendientes."
+            )
 
-        return True
+        matricula.estado = EstadoMatricula.APROBADA
+        matricula.comentario = comentario
+
+        return matricula
 
     @staticmethod
-    def rechazar_matricula(matricula):
+    def rechazar_matricula(matricula, comentario):
 
-        MatriculaService.rechazar_matricula(matricula)
+        if matricula.estado != EstadoMatricula.PENDIENTE:
+            raise ValidationError(
+                "Solo se pueden rechazar matrículas pendientes."
+            )
 
-        return True
+        if not comentario.strip():
+            raise ValidationError(
+                "Debe ingresar un comentario para rechazar la matrícula."
+            )
+
+        matricula.estado = EstadoMatricula.RECHAZADA
+        matricula.comentario = comentario
+
+        return matricula
 
     @staticmethod
     def matricula_manual(matricula):
