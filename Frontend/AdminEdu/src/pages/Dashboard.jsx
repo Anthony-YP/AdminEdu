@@ -42,9 +42,11 @@ const cardsPorRol = {
         { titulo: "Calificaciones", descripcion: "Ingresar calificaciones", ruta: "#", icon: Award },
     ],
     Estudiante: [
-        { titulo: "Cursos Matriculados", descripcion: "Ver mis cursos", ruta: "#", icon: BookOpen },
-        { titulo: "Calificaciones", descripcion: "Consultar notas", ruta: "#", icon: Award },
-        { titulo: "Pagos", descripcion: "Ver comprobantes", ruta: "#", icon: DollarSign },
+        { titulo: "Inicio", descripcion: "Resumen del estudiante", ruta: "/estudiante-dashboard", icon: LayoutDashboard },
+        { titulo: "Mi Perfil", descripcion: "Ver y editar datos personales", ruta: "/estudiante-perfil", icon: UserCog },
+        { titulo: "Mis Matrículas", descripcion: "Consultar estado de matrículas", ruta: "/estudiante-matriculas", icon: ClipboardCheck },
+        { titulo: "Historial", descripcion: "Ver cursos y notas", ruta: "/estudiante-historial", icon: Award },
+        { titulo: "Notificaciones", descripcion: "Leer alertas y mensajes", ruta: "/estudiante-notificaciones", icon: Bell },
     ],
     Representante: [
         { titulo: "Representados", descripcion: "Estudiantes a mi cargo", ruta: "#", icon: Users },

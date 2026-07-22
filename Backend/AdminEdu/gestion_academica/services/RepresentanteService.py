@@ -1,9 +1,9 @@
-from django.core.exceptions import ValidationError
-
+from gestion_academica.models.persona.Persona import Representante
 from gestion_academica.services.PersonaService import PersonaService
+from gestion_academica.services.BaseService import BaseService
 
 
-class RepresentanteService(PersonaService):
+class RepresentanteService(PersonaService, BaseService):
 
     @staticmethod
     def registrar_representante(representante):
@@ -13,45 +13,47 @@ class RepresentanteService(PersonaService):
         return True
 
     @staticmethod
-    def actualizar_representante(representante):
+    def crear_representante(**datos):
 
-        PersonaService.validar_persona(representante)
+        representante = Representante(**datos)
 
-        return True
+        RepresentanteService.registrar_representante(
+            representante
+        )
 
-    @staticmethod
-    def asociar_estudiante(representante, estudiante):
-        if estudiante is None:
-            raise ValidationError(
-                "Debe seleccionar un estudiante."
-            )
-
-        estudiante.representante = representante
-
-        return True
-
-    @staticmethod
-    def desasociar_estudiante(estudiante):
-
-        estudiante.representante = None
-
-        return True
-
-    @staticmethod
-    def visualizar_estudiantes(representante):
-        if hasattr(representante, "estudiantes"):
-            return representante.estudiantes.all()
-
-        return []
-
-    @staticmethod
-    def visualizar_perfil(representante):
+        representante.save()
 
         return representante
 
     @staticmethod
-    def editar_perfil(representante):
+    def actualizar_representante(
+        representante,
+        **datos
+    ):
 
-        PersonaService.validar_persona(representante)
+        for campo, valor in datos.items():
+            setattr(
+                representante,
+                campo,
+                valor
+            )
 
-        return True
+        RepresentanteService.registrar_representante(
+            representante
+        )
+
+        representante.save()
+
+        return representante
+
+    @staticmethod
+    def listar_representantes():
+
+        return Representante.objects.all()
+
+    @staticmethod
+    def eliminar_representante(
+        representante
+    ):
+
+        representante.delete()
