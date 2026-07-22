@@ -7,12 +7,14 @@ from gestion_academica.views.CursoViewSet import CursoViewSet
 from gestion_academica.views.ParaleloViewSet import ParaleloViewSet
 from gestion_academica.views.MatriculaViewSet import MatriculaViewSet
 from gestion_academica.views.DocenteViewSet import DocenteViewSet
+
 from gestion_academica.views.PersonaViewSet import PersonaViewSet
 from gestion_academica.views.EstudianteViewSet import EstudianteViewSet
 from gestion_academica.views.DirectorViewSet import DirectorViewSet
 from gestion_academica.views.SecretariaViewSet import SecretariaViewSet
 from gestion_academica.views.RepresentanteViewSet import RepresentanteViewSet
 from gestion_academica.views.NotificacionViewSet import NotificacionViewSet
+from gestion_academica.views.HomeView import home_info, cursos_disponibles
 
 router = DefaultRouter()
 
@@ -28,4 +30,7 @@ router.register("secretarias", SecretariaViewSet, basename="secretarias")
 router.register("representantes", RepresentanteViewSet, basename="representantes")
 router.register("notificaciones", NotificacionViewSet, basename="notificaciones")
 
-urlpatterns = router.urls
+urlpatterns = [
+    path("home/", home_info, name="home-info"),
+    path("cursos-disponibles/", cursos_disponibles, name="cursos-disponibles"),
+] + router.urls

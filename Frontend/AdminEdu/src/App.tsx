@@ -4,7 +4,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/Header";
 
 // Pages
+import Home from "./pages/Home";
+import CursosDisponibles from "./pages/CursosDisponibles";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Cursos from "./pages/Cursos";
 import CursosForm from "./components/CursosForm";
@@ -25,8 +28,11 @@ function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
-                    {/* Public Route */}
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/cursos-disponibles" element={<CursosDisponibles />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
                     
                     {/* Protected Routes Wrapper */}
                     <Route 
@@ -38,7 +44,6 @@ function App() {
                                     <main className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
                                         <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full">
                                             <Routes>
-                                                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                                                 <Route path="/dashboard" element={<Dashboard />} />
                                                 
                                                 {/* Academias (Solo Director) */}
