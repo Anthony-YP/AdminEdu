@@ -1,20 +1,20 @@
 from django.conf import settings
 from django.shortcuts import redirect
+from django.contrib.auth import login
+from django.contrib.auth.models import Group
 
+from .models import GRUPO_ASPIRANTE
 from .services.google.google_auth_service import GoogleAuthService
 from .services.google.google_user_service import GoogleUserService
 from .services.auth.jwt_service import JWTService
 
 
-def google_callback(request):
+def google_callback_process(request):
     """
-    Callback ejecutado después de una autenticación
-    exitosa con Google.
-
-    Si el usuario ya existe, genera JWT y redirige.
-    Si es nuevo (aspirante), lo crea automáticamente.
+    Endpoint intermedio que recibe el callback de allauth
+    después del login con Google. Genera JWT y redirige
+    al frontend con los tokens.
     """
-
     if not request.user.is_authenticated:
         return redirect(
             f"{settings.FRONTEND_URL}/login?oauth_error=not_authenticated"
@@ -46,10 +46,18 @@ def google_callback(request):
             last_name=last_name,
         )
 
+    if not usuario.groups.exists():
+        aspirante_group, _ = Group.objects.get_or_create(
+            name=GRUPO_ASPIRANTE
+        )
+        usuario.groups.add(aspirante_group)
+
     if not GoogleAuthService.is_active(usuario):
         return redirect(
             f"{settings.FRONTEND_URL}/login?oauth_error=user_disabled"
         )
+
+    login(request, usuario, backend="allauth.account.auth_backends.AuthenticationBackend")
 
     tokens = JWTService.generate_tokens(usuario)
 

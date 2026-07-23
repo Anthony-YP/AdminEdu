@@ -21,6 +21,22 @@ class AcademiaSerializer(serializers.ModelSerializer):
         model = Academia
         fields = ['id', 'nombre', 'telefono', 'direccion']
 
+class ParaleloBasicoSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre = serializers.CharField()
+    docente_nombre = serializers.SerializerMethodField()
+    dias_clase = serializers.CharField()
+    hora_inicio = serializers.TimeField()
+    hora_fin = serializers.TimeField()
+    cupo_max = serializers.IntegerField()
+    estado = serializers.CharField()
+
+    def get_docente_nombre(self, obj):
+        if hasattr(obj, 'docente') and obj.docente:
+            return f"{obj.docente.nombres} {obj.docente.apellidos}"
+        return "Sin asignar"
+
+
 class CursoSerializer(serializers.ModelSerializer):
 
     academia_nombre = serializers.CharField(
@@ -29,6 +45,7 @@ class CursoSerializer(serializers.ModelSerializer):
     )
 
     imagen = serializers.SerializerMethodField()
+    paralelos = serializers.SerializerMethodField()
 
     class Meta:
 
@@ -44,6 +61,7 @@ class CursoSerializer(serializers.ModelSerializer):
             "precio",
             "fecha_inicio",
             "fecha_fin",
+            "paralelos",
         ]
 
 
@@ -60,6 +78,10 @@ class CursoSerializer(serializers.ModelSerializer):
             )
 
         return obj.imagen.url
+
+    def get_paralelos(self, obj):
+        paralelos = obj.paralelos.all()
+        return ParaleloBasicoSerializer(paralelos, many=True).data
 
 class ParaleloSerializer(serializers.ModelSerializer):  
     class Meta:

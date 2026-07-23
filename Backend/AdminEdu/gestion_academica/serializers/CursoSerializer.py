@@ -3,6 +3,22 @@ from rest_framework import serializers
 from gestion_academica.models.academia.Academia import Curso
 
 
+class ParaleloBasicoSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    nombre = serializers.CharField()
+    docente_nombre = serializers.SerializerMethodField()
+    dias_clase = serializers.CharField()
+    hora_inicio = serializers.TimeField()
+    hora_fin = serializers.TimeField()
+    cupo_max = serializers.IntegerField()
+    estado = serializers.CharField()
+
+    def get_docente_nombre(self, obj):
+        if hasattr(obj, 'docente') and obj.docente:
+            return f"{obj.docente.nombres} {obj.docente.apellidos}"
+        return "Sin asignar"
+
+
 class CursoCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -40,15 +56,32 @@ class CursoCreateSerializer(serializers.ModelSerializer):
             },
         }
 
+
 class CursoSerializer(serializers.ModelSerializer):
 
     academia_nombre = serializers.CharField(
         source="academia.nombre",
         read_only=True
     )
+    paralelos = serializers.SerializerMethodField()
 
     class Meta:
 
         model = Curso
 
-        fields = "__all__"
+        fields = [
+            "id",
+            "academia",
+            "academia_nombre",
+            "nombre",
+            "descripcion",
+            "imagen",
+            "precio",
+            "fecha_inicio",
+            "fecha_fin",
+            "paralelos",
+        ]
+
+    def get_paralelos(self, obj):
+        paralelos = obj.paralelos.all()
+        return ParaleloBasicoSerializer(paralelos, many=True).data

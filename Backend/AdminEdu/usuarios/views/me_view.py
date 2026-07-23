@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from usuarios.serializers import MeSerializer
+from usuarios.serializers.me_serializer import MeSerializer
 
 
 class MeView(APIView):
@@ -18,12 +18,5 @@ class MeView(APIView):
         )
 
         data = serializer.data
-
-        data["groups"] = list(
-            request.user.groups.values_list(
-                "name",
-                flat=True
-            )
-        )
 
         return Response(data)

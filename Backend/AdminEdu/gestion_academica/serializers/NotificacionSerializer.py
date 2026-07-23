@@ -10,5 +10,5 @@ class NotificacionSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "id",
             "usuario",
-            "fecha_creacion",
+            "fecha",
         )

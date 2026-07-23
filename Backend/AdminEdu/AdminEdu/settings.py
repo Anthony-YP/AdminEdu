@@ -193,6 +193,10 @@ ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
 
+LOGIN_REDIRECT_URL = "/api/auth/google/callback-process/"
+SOCIALACCOUNT_LOGIN_REDIRECT_URL = "/api/auth/google/callback-process/"
+SOCIALACCOUNT_SIGNUP_REDIRECT_URL = "/api/auth/google/callback-process/"
+
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 ACCOUNT_ADAPTER = 'usuarios.adapters.AdminEduAccountAdapter'
