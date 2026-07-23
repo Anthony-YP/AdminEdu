@@ -50,6 +50,16 @@ GRUPOS_CONFIG = {
         "permisos": ["view"],
         "modelos": [Matricula, CalificacionFinal, ComprobantePago, Notificacion],
     },
+
+    "Aspirante": {
+    "permisos": [
+        "view",
+    ],
+    "modelos": [
+        Curso,
+        Academia,
+    ],
+    },
 }
 
 

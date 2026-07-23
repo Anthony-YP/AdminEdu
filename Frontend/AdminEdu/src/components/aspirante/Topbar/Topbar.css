@@ -1,0 +1,61 @@
+.topbar{
+
+    height:80px;
+
+    background:white;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 40px;
+
+    border-bottom:1px solid #e5e7eb;
+
+}
+
+.topbar h1{
+
+    font-size:1.5rem;
+
+    color:#1e3a8a;
+
+}
+
+.topbar-user{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+}
+
+.topbar-user img{
+
+    width:50px;
+
+    height:50px;
+
+    border-radius:50%;
+
+    object-fit:cover;
+
+}
+
+.topbar-user strong{
+
+    display:block;
+
+}
+
+.topbar-user p{
+
+    color:#64748b;
+
+    font-size:.9rem;
+
+}

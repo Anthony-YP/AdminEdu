@@ -3,14 +3,19 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
+from .serializers import MeSerializer
 
 from .serializers import (
     LoginSerializer,
     UserSerializer,
     GroupSerializer,
+    MeSerializer,
 )
 
-from .services.jwt_service import JWTService
+from .services.auth.jwt_service import JWTService
 from .services.authentication_service import AuthenticationService
 
 
@@ -53,3 +58,16 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+
+class MeView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        serializer = MeSerializer(request.user)
+
+        return Response(serializer.data)
+    

@@ -1,107 +1,184 @@
+from rest_framework import permissions
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
-
-from gestion_academica.models.academia.Academia import Curso
-
-from gestion_academica.serializers.CursoSerializer import CursoSerializer
-
 from gestion_academica.services.CursoService import CursoService
+from gestion_academica.api.serializers import CursoSerializer
+from gestion_academica.serializers.CursoSerializer import CursoCreateSerializer
+from usuarios.permissions import EsDirector
+
+from rest_framework.parsers import MultiPartParser, FormParser
 
 
+class CursoViewSet(
+    PermisosViewSet
+):
+    parser_classes = (
+        MultiPartParser,
+        FormParser,
+    )
 
-class CursoViewSet(PermisosViewSet):
+    permission_create = EsDirector
 
+    permission_read = permissions.IsAuthenticated
 
-    serializer_class = CursoSerializer
+    permission_update = EsDirector
 
+    permission_delete = EsDirector
 
     def get_queryset(self):
 
         return CursoService.listar_cursos()
 
+    def get_serializer_class(self):
 
+        if self.action in [
+            "create",
+            "update",
+            "partial_update"
+        ]:
 
-    def create(self,request):
+            return CursoCreateSerializer
 
-        serializer = self.serializer_class(
+        return CursoSerializer
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="publicos",
+        permission_classes=[permissions.AllowAny],
+    )
+    def publicos(self, request):
+        cursos = CursoService.listar_cursos()
+        serializer = CursoSerializer(cursos, many=True, context={"request": request})
+        return Response(serializer.data)
+
+    def create(
+        self,
+        request,
+        *args,
+        **kwargs
+    ):
+
+        serializer = self.get_serializer(
             data=request.data
         )
 
-
         serializer.is_valid(
             raise_exception=True
         )
 
-
         curso = CursoService.crear_curso(
-            serializer.validated_data
+
+            academia=serializer.validated_data["academia"],
+
+            nombre=serializer.validated_data["nombre"],
+
+            descripcion=serializer.validated_data["descripcion"],
+
+            imagen=serializer.validated_data.get("imagen"),
+
+            precio=serializer.validated_data["precio"],
+
+            fecha_inicio=serializer.validated_data["fecha_inicio"],
+
+            fecha_fin=serializer.validated_data["fecha_fin"],
         )
 
+        response_serializer = self.get_serializer(
+            curso
+        )
 
         return Response(
-            self.serializer_class(curso).data,
+            response_serializer.data,
             status=status.HTTP_201_CREATED
         )
 
+    def update(
+        self,
+        request,
+        *args,
+        **kwargs
+    ):
 
-
-    def retrieve(self,request,pk=None):
-
-        curso = CursoService.obtener_curso(
-            pk
+        partial = kwargs.pop(
+            "partial",
+            False
         )
 
+        curso = self.get_object()
 
-        return Response(
-            self.serializer_class(curso).data
-        )
-
-
-
-    def update(self,request,pk=None):
-
-        curso = CursoService.obtener_curso(
-            pk
-        )
-
-
-        serializer = self.serializer_class(
+        serializer = self.get_serializer(
             curso,
             data=request.data,
-            partial=True
+            partial=partial
         )
-
 
         serializer.is_valid(
             raise_exception=True
         )
 
-
         curso = CursoService.actualizar_curso(
-            curso,
-            serializer.validated_data
+            curso=curso,
+
+            academia=serializer.validated_data.get(
+                "academia",
+                curso.academia
+            ),
+
+            nombre=serializer.validated_data.get(
+                "nombre",
+                curso.nombre
+            ),
+
+            descripcion=serializer.validated_data.get(
+                "descripcion",
+                curso.descripcion
+            ),
+
+            imagen=serializer.validated_data.get(
+                "imagen",
+                None
+            ),
+
+            precio=serializer.validated_data.get(
+                "precio",
+                curso.precio
+            ),
+
+            fecha_inicio=serializer.validated_data.get(
+                "fecha_inicio",
+                curso.fecha_inicio
+            ),
+
+            fecha_fin=serializer.validated_data.get(
+                "fecha_fin",
+                curso.fecha_fin
+            ),
         )
 
+        response_serializer = self.get_serializer(
+            curso
+        )
 
         return Response(
-            self.serializer_class(curso).data
+            response_serializer.data
         )
 
+    def destroy(
+        self,
+        request,
+        *args,
+        **kwargs
+    ):
 
-
-    def destroy(self,request,pk=None):
-
-        curso = CursoService.obtener_curso(
-            pk
-        )
-
+        curso = self.get_object()
 
         CursoService.eliminar_curso(
             curso
         )
-
 
         return Response(
             status=status.HTTP_204_NO_CONTENT

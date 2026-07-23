@@ -1,189 +1,186 @@
 from datetime import date
 from decimal import Decimal
 
-from django.db import transaction
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
-from gestion_academica.models.academia.Academia import Curso
-from gestion_academica.models.academia.Academia import Academia
+from gestion_academica.models.academia.Academia import (
+    Academia,
+    Curso,
+)
 
 
 class CursoService:
     """
-    Contiene todas las reglas de negocio
-    relacionadas con Curso.
+    Contiene las reglas de negocio relacionadas con los cursos.
     """
 
     @staticmethod
-    def listar_cursos():
-        return Curso.objects.select_related(
-            "academia"
-        ).all()
+    def validar_fechas(fecha_inicio, fecha_fin):
+        """
+        RF21:
+        La fecha de inicio debe ser anterior a la fecha de finalización.
+        """
 
+        if fecha_inicio >= fecha_fin:
+            raise ValidationError(
+                "La fecha de inicio debe ser anterior "
+                "a la fecha de finalización."
+            )
 
     @staticmethod
-    def obtener_curso(curso_id):
+    def validar_precio(precio):
+        """
+        El precio de un curso no puede ser negativo.
+        """
 
-        try:
-            return Curso.objects.select_related(
-                "academia"
-            ).get(
-                id=curso_id
-            )
-
-        except Curso.DoesNotExist:
+        if precio < Decimal("0.00"):
             raise ValidationError(
-                "El curso no existe"
+                "El precio del curso no puede ser negativo."
             )
-
 
     @staticmethod
     @transaction.atomic
-    def crear_curso(data):
+    def crear_curso(
+        academia: Academia,
+        nombre: str,
+        descripcion: str,
+        imagen,
+        precio: Decimal,
+        fecha_inicio: date,
+        fecha_fin: date
+    ) -> Curso:
+        """
+        Crea un curso aplicando las reglas de negocio.
+        """
 
-        academia = data.get("academia")
-        nombre = data.get("nombre")
-        precio = data.get("precio")
-        fecha_inicio = data.get("fecha_inicio")
-        fecha_fin = data.get("fecha_fin")
+        if academia is None:
+            raise ValidationError(
+                "La academia es obligatoria."
+            )
 
+        if not nombre or not nombre.strip():
+            raise ValidationError(
+                "El nombre del curso es obligatorio."
+            )
 
-        CursoService.validar_datos(
-            nombre,
-            precio,
+        CursoService.validar_fechas(
             fecha_inicio,
             fecha_fin
         )
 
+        CursoService.validar_precio(precio)
 
-        if not Academia.objects.filter(
-            id=academia.id
-        ).exists():
+        nombre = nombre.strip()
 
-            raise ValidationError(
-                "La academia indicada no existe"
-            )
-
-
-        if Curso.objects.filter(
+        curso_existente = Curso.objects.filter(
             academia=academia,
             nombre__iexact=nombre
-        ).exists():
+        ).exists()
 
+        if curso_existente:
             raise ValidationError(
-                "Ya existe un curso con ese nombre en la academia"
+                "Ya existe un curso con ese nombre "
             )
 
-
-        curso = Curso.objects.create(
+        return Curso.objects.create(
             academia=academia,
             nombre=nombre,
+            descripcion=descripcion.strip(),
+            imagen=imagen,
             precio=precio,
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin
         )
 
-
-        return curso
-
-
-
     @staticmethod
     @transaction.atomic
-    def actualizar_curso(curso, data):
+    def actualizar_curso(
+        curso: Curso,
+        academia: Academia,
+        nombre: str,
+        descripcion: str,
+        imagen,
+        precio: Decimal,
+        fecha_inicio: date,
+        fecha_fin: date
+    ) -> Curso:
+        """
+        Actualiza un curso aplicando las mismas reglas de negocio
+        utilizadas durante su creación.
+        """
 
-        nombre = data.get(
-            "nombre",
-            curso.nombre
-        )
+        if curso is None:
+            raise ValidationError(
+                "El curso no existe."
+            )
 
-        precio = data.get(
-            "precio",
-            curso.precio
-        )
+        if academia is None:
+            raise ValidationError(
+                "La academia es obligatoria."
+            )
 
-        fecha_inicio = data.get(
-            "fecha_inicio",
-            curso.fecha_inicio
-        )
+        if not nombre or not nombre.strip():
+            raise ValidationError(
+                "El nombre del curso es obligatorio."
+            )
+        
+        if not descripcion or not descripcion.strip():
+            raise ValidationError(
+                "La descripción del curso es obligatoria."
+            )
+        
 
-        fecha_fin = data.get(
-            "fecha_fin",
-            curso.fecha_fin
-        )
-
-
-        CursoService.validar_datos(
-            nombre,
-            precio,
+        CursoService.validar_fechas(
             fecha_inicio,
             fecha_fin
         )
 
+        CursoService.validar_precio(precio)
 
-        if Curso.objects.filter(
-            academia=curso.academia,
+        nombre = nombre.strip()
+
+        curso_existente = Curso.objects.filter(
+            academia=academia,
             nombre__iexact=nombre
         ).exclude(
-            id=curso.id
-        ).exists():
+            pk=curso.pk
+        ).exists()
 
+        if curso_existente:
             raise ValidationError(
-                "Ya existe otro curso con ese nombre"
+                "Ya existe otro curso con ese nombre "
+                "en esta academia."
             )
 
-
+        curso.academia = academia
         curso.nombre = nombre
+        curso.descripcion = descripcion.strip()
+        if  imagen is not None: curso.imagen = imagen
         curso.precio = precio
         curso.fecha_inicio = fecha_inicio
         curso.fecha_fin = fecha_fin
 
-
         curso.save()
-
 
         return curso
 
+    @staticmethod
+    def listar_cursos():
+        """
+        Lista todos los cursos registrados.
+        """
 
+        return Curso.objects.all().order_by("nombre")
 
     @staticmethod
-    @transaction.atomic
-    def eliminar_curso(curso):
+    def eliminar_curso(curso: Curso):
+        """
+        Elimina un curso aplicando las reglas de negocio.
+        """
+        if curso is None:
+            raise ValidationError(
+                "El curso no existe."
+            )
 
         curso.delete()
-
-
-
-    @staticmethod
-    def validar_datos(
-        nombre,
-        precio,
-        fecha_inicio,
-        fecha_fin
-    ):
-
-
-        if not nombre:
-            raise ValidationError(
-                "El nombre del curso es obligatorio"
-            )
-
-
-        if precio <= Decimal("0"):
-            raise ValidationError(
-                "El precio debe ser mayor a cero"
-            )
-
-
-        if fecha_inicio < date.today():
-
-            raise ValidationError(
-                "La fecha de inicio no puede estar en el pasado"
-            )
-
-
-        if fecha_fin <= fecha_inicio:
-
-            raise ValidationError(
-                "La fecha final debe ser posterior a la inicial"
-            )

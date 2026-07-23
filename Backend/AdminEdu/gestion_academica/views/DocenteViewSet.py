@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
-from gestion_academica.serializers.DocenteSerializer import DocenteSerializer
+from gestion_academica.api.serializers import DocenteSerializer
 from usuarios.permissions import EsAdministrativo
 
 

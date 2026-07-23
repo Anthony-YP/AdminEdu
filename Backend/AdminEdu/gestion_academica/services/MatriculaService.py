@@ -185,8 +185,8 @@ class MatriculaService:
 
         matricula.save(
             update_fields=[
-                "estado"
-                "comentario"
+                "estado",
+                "comentario",
             ]
         )
 
@@ -305,7 +305,7 @@ class MatriculaService:
 
     @staticmethod
     @transaction.atomic
-    def culminar_matricula(matricula,aprobado):
+    def culminar_matricula(matricula):
         """
         RF17:
         Actualiza el estado académico de una matrícula
@@ -320,17 +320,9 @@ class MatriculaService:
                 "académico de una matrícula aprobada."
             )
 
-        if aprobado:
-
-            matricula.estado = (
-                EstadoMatricula.CURSO_APROBADO
-            )
-
-        else:
-
-            matricula.estado = (
-                EstadoMatricula.CURSO_REPROBADO
-            )
+        matricula.estado = (
+            EstadoMatricula.FINALIZADA
+        )
 
         matricula.save(
             update_fields=[
