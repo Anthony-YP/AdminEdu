@@ -132,6 +132,7 @@ class Estudiante(Persona):
         self.full_clean()
         super().save(*args, **kwargs)
 
+        
     class Meta:
         db_table = "estudiante"
         verbose_name = "Estudiante"

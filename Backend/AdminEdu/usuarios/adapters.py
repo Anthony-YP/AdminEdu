@@ -1,17 +1,13 @@
 from allauth.account.adapter import DefaultAccountAdapter
+from django.conf import settings
 
 
 class AdminEduAccountAdapter(DefaultAccountAdapter):
-    """
-    Adapter principal de cuentas para AdminEdu.
-
-    Se utiliza para impedir el registro automático de usuarios
-    mediante proveedores externos como Google.
-    """
 
     def is_open_for_signup(self, request):
-        """
-        Solo los usuarios previamente registrados
-        podrán iniciar sesión con Google.
-        """
-        return False
+
+        return True
+
+    def get_login_redirect_url(self, request):
+
+        return f"{settings.FRONTEND_URL}/oauth-callback"

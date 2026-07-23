@@ -57,6 +57,10 @@ class Matricula(models.Model):
         choices=EstadoMatricula.choices,
         default=EstadoMatricula.PENDIENTE
     )
+    comentario = models.TextField(
+        blank=True,
+        default="",
+    )
 
     class Meta:
         db_table = "matricula"

@@ -1,9 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from usuarios.views.google_auth_view import GoogleAuthView
 
-from .views import LoginView, UserViewSet, GroupViewSet
+from .views import (
+    LoginView,
+    UserViewSet,
+    GroupViewSet,
+    MeView,
+)
+
 from .views_oauth import google_login
-from .views_register import register
 
 router = DefaultRouter()
 
@@ -32,6 +38,11 @@ urlpatterns = [
         include(router.urls),
     ),
 
+    path(
+        "me/",
+        MeView.as_view(),
+        name="me",
+    ),
 
     path(
     "auth/google/",
@@ -40,9 +51,9 @@ urlpatterns = [
     ),
 
     path(
-        "register",
-        register,
-        name="register",
+    "auth/google/login/",
+    GoogleAuthView.login,
+    name="google-login",
     ),
 
 ]

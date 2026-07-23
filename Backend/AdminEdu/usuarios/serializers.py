@@ -40,3 +40,19 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'is_active', 'groups']
+
+
+# Serializer para el usuario autenticado
+class MeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+
+        model = User
+
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+        ]

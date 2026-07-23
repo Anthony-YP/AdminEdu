@@ -17,8 +17,8 @@ export default function EstudiantePerfil() {
     const cargar = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/estudiantes/me/");
-        const data = response.data || null;
+        const response = await api.get("/personas/");
+        const data = response.data?.[0] || null;
         setPersona(data);
         setHasPersona(Boolean(data));
         setFormData({
@@ -27,7 +27,6 @@ export default function EstudiantePerfil() {
           direccion: data?.direccion || "",
         });
       } catch (err) {
-        console.error(err);
         setError("No se pudo cargar el perfil.");
       } finally {
         setLoading(false);

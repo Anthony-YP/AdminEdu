@@ -1,14 +1,12 @@
-import axios from "axios";
-
-
-const authApi = axios.create({
-    baseURL: "http://127.0.0.1:8000/api"
-});
+import api from "./api";
 
 
 export const login = (username, password) => {
-    return authApi.post(
+    return api.post(
         "/login",
-        { username, password }
+        {
+            username,
+            password
+        }
     );
 };

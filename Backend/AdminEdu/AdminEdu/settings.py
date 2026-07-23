@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY", default="dev-secret-key")
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=True, cast=bool)
@@ -131,7 +131,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -156,9 +161,6 @@ SIMPLE_JWT = {
 }
 
 
-# Configuración de email (desarrollo: salida por consola)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 # Configuración de sitios (para allauth)
 SITE_ID = 1
 
@@ -174,8 +176,8 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         "APP": {
-            "client_id": config("GOOGLE_CLIENT_ID", default="dummy-client-id"),
-            "secret": config("GOOGLE_CLIENT_SECRET", default="dummy-client-secret"),
+            "client_id": config("GOOGLE_CLIENT_ID"),
+            "secret": config("GOOGLE_CLIENT_SECRET"),
             "key": ""
         },
         "SCOPE": [
@@ -190,13 +192,6 @@ SOCIALACCOUNT_PROVIDERS = {
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
-ACCOUNT_LOGIN_METHODS = {"username", "email"}
-ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-ACCOUNT_PASSWORD_RESET_TOKEN_GENERATOR = "allauth.account.forms.PasswordResetTokenGenerator"
-ACCOUNT_RATE_LIMITS = {
-    "password_reset": "5/hour",
-}
 
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
