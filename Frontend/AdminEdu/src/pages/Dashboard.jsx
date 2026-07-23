@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 // Mapeo de módulos reales que tienen endpoints en el API
-const modulosDisponiblesAPI = ["/academias", "/cursos", "/paralelos"];
+const rutasDisponibles = ["/academias", "/cursos", "/paralelos", "/usuarios", "/personas", "/estudiante-dashboard", "/estudiante-perfil", "/estudiante-matriculas", "/estudiante-historial", "/estudiante-notificaciones"];
 
 // Configuración de módulos con iconos de Lucide
 const cardsPorRol = {
@@ -164,7 +164,7 @@ export default function Dashboard() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {cards.map((card, index) => {
-                        const isAvailable = modulosDisponiblesAPI.includes(card.ruta) || card.ruta === "/usuarios";
+                        const isAvailable = rutasDisponibles.includes(card.ruta);
                         const isDisabled = card.ruta === "#";
                         const IconComponent = card.icon;
 

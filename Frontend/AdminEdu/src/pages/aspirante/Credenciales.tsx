@@ -3,6 +3,10 @@ import { useAuth } from "../../hooks/useAuth";
 export default function Credenciales() {
     const { usuario } = useAuth();
 
+    const initials = usuario
+        ? (usuario.first_name?.charAt(0) || usuario.username?.charAt(0) || "A").toUpperCase()
+        : "A";
+
     return (
         <div className="space-y-6">
             <div>
@@ -12,14 +16,22 @@ export default function Credenciales() {
 
             <div className="bg-white rounded-xl border border-slate-200 p-8 max-w-2xl">
                 <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                    <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-2xl font-bold text-emerald-700">
-                            {usuario?.first_name?.charAt(0) || usuario?.username?.charAt(0)?.toUpperCase() || "A"}
-                        </span>
-                    </div>
+                    {usuario?.photo ? (
+                        <img
+                            src={usuario.photo}
+                            alt="Foto de perfil"
+                            className="w-16 h-16 rounded-full object-cover border-2 border-emerald-200"
+                        />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-2xl font-bold text-emerald-700">{initials}</span>
+                        </div>
+                    )}
                     <div>
                         <h2 className="text-lg font-semibold text-slate-800">
-                            {usuario?.first_name} {usuario?.last_name}
+                            {usuario?.first_name && usuario?.last_name
+                                ? `${usuario.first_name} ${usuario.last_name}`
+                                : usuario?.username}
                         </h2>
                         <p className="text-slate-500 text-sm">@{usuario?.username}</p>
                     </div>
@@ -48,8 +60,8 @@ export default function Credenciales() {
 
                 <div className="mt-6 pt-6 border-t border-slate-100">
                     <p className="text-sm text-slate-400">
-                        Tu cuenta fue creada mediante Google OAuth. Para actualizar tu información,
-                        contacta a la administración del sistema.
+                        Tu cuenta fue creada mediante Google OAuth. Las credenciales institucionales
+                        serán generadas una vez que tu matrícula sea aprobada por Secretaría.
                     </p>
                 </div>
             </div>
