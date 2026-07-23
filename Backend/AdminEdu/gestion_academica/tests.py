@@ -108,3 +108,11 @@ class EstudianteDataAPITests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["mensaje"], "Tu matrícula fue aprobada")
+
+    def test_estudiante_me_endpoint_devuelve_estudiante_autenticado(self):
+        response = self.client.get("/api/estudiantes/me/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.persona.id)
+        self.assertEqual(response.data["nombres"], "Carlos")
+        self.assertEqual(response.data["correo"], "carlos.mora@test.com")
