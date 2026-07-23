@@ -202,6 +202,7 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 ACCOUNT_ADAPTER = 'usuarios.adapters.AdminEduAccountAdapter'
 
 
+
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default="http://localhost:5173"
