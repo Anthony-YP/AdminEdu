@@ -13,7 +13,11 @@ from gestion_academica.views.DirectorViewSet import DirectorViewSet
 from gestion_academica.views.SecretariaViewSet import SecretariaViewSet
 from gestion_academica.views.RepresentanteViewSet import RepresentanteViewSet
 from gestion_academica.views.NotificacionViewSet import NotificacionViewSet
-from gestion_academica.views.AspiranteViewSet import AspirantePerfilView, AspiranteSolicitudesView
+from gestion_academica.views.AspiranteViewSet import (
+    AspirantePerfilView,
+    AspiranteSolicitudesView,
+    AspiranteMatriculaView,
+)
 
 router = DefaultRouter()
 
@@ -32,4 +36,5 @@ router.register("notificaciones", NotificacionViewSet, basename="notificaciones"
 urlpatterns = router.urls + [
     path("aspirante/perfil/", AspirantePerfilView.as_view(), name="aspirante-perfil"),
     path("aspirante/solicitudes/", AspiranteSolicitudesView.as_view(), name="aspirante-solicitudes"),
+    path("aspirante/solicitar-matricula/", AspiranteMatriculaView.as_view(), name="aspirante-solicitar-matricula"),
 ]

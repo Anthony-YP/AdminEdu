@@ -6,7 +6,12 @@ interface Curso {
     id: number;
     nombre: string;
     descripcion: string;
-    duracion: string;
+    academia_nombre?: string;
+    precio: number;
+    fecha_inicio: string;
+    fecha_fin: string;
+    imagen?: string | null;
+    paralelos?: any[];
 }
 
 export default function LandingPage() {
@@ -197,11 +202,14 @@ export default function LandingPage() {
                                     <p className="text-sm text-slate-500 line-clamp-2 mb-3">
                                         {curso.descripcion || "Curso de formación profesional"}
                                     </p>
-                                    {curso.duracion && (
-                                        <span className="text-xs text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
-                                            {curso.duracion}
-                                        </span>
-                                    )}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-lg font-bold text-blue-600">${curso.precio}</span>
+                                        {curso.academia_nombre && (
+                                            <span className="text-xs text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+                                                {curso.academia_nombre}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                         </div>

@@ -5,6 +5,7 @@ export interface Usuario {
     first_name: string;
     last_name: string;
     groups: string[];
+    photo?: string | null;
 }
 
 export interface LoginResponse {

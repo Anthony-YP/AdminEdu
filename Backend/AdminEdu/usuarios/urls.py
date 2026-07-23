@@ -9,7 +9,7 @@ from .views import (
     MeView,
 )
 
-from .views_oauth import google_login
+from .views_oauth import google_login, google_callback_process
 
 router = DefaultRouter()
 
@@ -45,15 +45,21 @@ urlpatterns = [
     ),
 
     path(
-    "auth/google/",
-    google_login,
-    name="google_login",
+        "auth/google/",
+        google_login,
+        name="google_login",
     ),
 
     path(
-    "auth/google/login/",
-    GoogleAuthView.login,
-    name="google-login",
+        "auth/google/login/",
+        GoogleAuthView.login,
+        name="google-login",
+    ),
+
+    path(
+        "auth/google/callback-process/",
+        google_callback_process,
+        name="google-callback-process",
     ),
 
 ]

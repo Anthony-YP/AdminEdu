@@ -26,8 +26,9 @@ export default function DashboardAspirante() {
         load();
     }, []);
 
-    const pendientes = solicitudes.filter((s) => s.estado === "PENDIENTE").length;
-    const aprobadas = solicitudes.filter((s) => s.estado === "APROBADA").length;
+    const pendientes = solicitudes.filter((s) => s.estado === "Pendiente").length;
+    const aprobadas = solicitudes.filter((s) => s.estado === "Aprobada").length;
+    const rechazadas = solicitudes.filter((s) => s.estado === "Rechazada").length;
 
     return (
         <div className="space-y-8">
@@ -42,7 +43,7 @@ export default function DashboardAspirante() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,10 +79,22 @@ export default function DashboardAspirante() {
                         <p className="text-sm text-slate-500">Matrículas Aprobadas</p>
                     </div>
                 </div>
+
+                <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-slate-800">{loading ? "..." : rechazadas}</p>
+                        <p className="text-sm text-slate-500">Solicitudes Rechazadas</p>
+                    </div>
+                </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Link
                     to="/aspirante/cursos"
                     className="group bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-300 hover:shadow-md transition-all duration-200"
@@ -106,12 +119,29 @@ export default function DashboardAspirante() {
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
                             <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                         </div>
                         <div>
-                            <h3 className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">Mis Solicitudes</h3>
+                            <h3 className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">Seguimiento</h3>
                             <p className="text-sm text-slate-500">Revisa el estado de tus solicitudes</p>
+                        </div>
+                    </div>
+                </Link>
+
+                <Link
+                    to="/aspirante/credenciales"
+                    className="group bg-white rounded-xl border border-slate-200 p-6 hover:border-purple-300 hover:shadow-md transition-all duration-200"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-purple-50 group-hover:bg-purple-100 flex items-center justify-center transition-colors">
+                            <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-slate-800 group-hover:text-purple-700 transition-colors">Credenciales</h3>
+                            <p className="text-sm text-slate-500">Consulta tu información de acceso</p>
                         </div>
                     </div>
                 </Link>
@@ -120,7 +150,12 @@ export default function DashboardAspirante() {
             {/* Recent Courses */}
             {!loading && cursos.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-800 mb-4">Cursos Destacados</h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold text-slate-800">Cursos Destacados</h2>
+                        <Link to="/aspirante/cursos" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                            Ver todos →
+                        </Link>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {cursos.slice(0, 3).map((curso) => (
                             <Link
@@ -128,11 +163,19 @@ export default function DashboardAspirante() {
                                 to={`/aspirante/cursos/${curso.id}`}
                                 className="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md hover:border-slate-300 transition-all duration-200"
                             >
-                                <h3 className="font-semibold text-slate-800 mb-2">{curso.nombre}</h3>
-                                <p className="text-sm text-slate-500 line-clamp-2">{curso.descripcion || "Sin descripción"}</p>
-                                {curso.duracion && (
-                                    <p className="text-xs text-slate-400 mt-3">Duración: {curso.duracion}</p>
+                                {curso.imagen && (
+                                    <div className="w-full h-32 rounded-lg bg-slate-100 mb-3 overflow-hidden">
+                                        <img src={curso.imagen} alt={curso.nombre} className="w-full h-full object-cover" />
+                                    </div>
                                 )}
+                                <h3 className="font-semibold text-slate-800 mb-1">{curso.nombre}</h3>
+                                <p className="text-sm text-slate-500 line-clamp-2 mb-3">{curso.descripcion || "Sin descripción"}</p>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-lg font-bold text-emerald-600">${curso.precio}</span>
+                                    {curso.paralelos?.length > 0 && (
+                                        <span className="text-xs text-slate-400">{curso.paralelos.length} paralelo(s)</span>
+                                    )}
+                                </div>
                             </Link>
                         ))}
                     </div>

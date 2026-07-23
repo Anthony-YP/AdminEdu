@@ -38,7 +38,7 @@ export default function EstudianteHistorial() {
                 <p className="text-sm text-gray-600">Paralelo: {m.paralelo_matricula || "—"}</p>
                 <p className="text-sm text-gray-600">Estado: {m.estado || "—"}</p>
               </div>
-              <Badge variant="blue">{m.estado === "APROBADA" ? "Aprobado" : "En proceso"}</Badge>
+              <Badge variant="blue">{m.estado === "Aprobada" ? "Aprobado" : "En proceso"}</Badge>
             </CardContent>
           </Card>
         ))}

@@ -3,17 +3,16 @@ import { Usuario } from "../types/Auth";
 export function getDefaultRoute(
     usuario: Usuario
 ): string {
-    if (usuario.groups.includes("Director") || usuario.groups.includes("Secretaria")) {
-        return "/dashboard";
-    }
+    const groups = usuario.groups || [];
 
-    if (usuario.groups.includes("Estudiante")) {
-        return "/dashboard";
-    }
-
-    if (usuario.groups.includes("Aspirante")) {
+    if (groups.includes("Aspirante")) {
         return "/aspirante";
     }
 
+    if (groups.includes("Estudiante")) {
+        return "/estudiante-dashboard";
+    }
+
+    // Director, Secretaria, Docente, Representante
     return "/dashboard";
 }
