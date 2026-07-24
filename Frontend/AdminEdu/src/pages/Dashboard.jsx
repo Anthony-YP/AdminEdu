@@ -22,19 +22,16 @@ const ORDEN_ROLES = ["Director", "Secretaria", "Docente", "Estudiante", "Represe
 // Configuración de módulos con iconos de Lucide, por rol
 const cardsPorRol = {
     Director: [
-        { titulo: "Academias", descripcion: "Gestionar academias y sedes", ruta: "/academias", icon: Building2 },
-        { titulo: "Cursos", descripcion: "Crear, editar y eliminar cursos", ruta: "/cursos", icon: BookOpen },
-        { titulo: "Paralelos", descripcion: "Gestionar paralelos y horarios", ruta: "/paralelos", icon: CalendarDays },
-        { titulo: "Usuarios", descripcion: "Gestionar cuentas y roles", ruta: "/usuarios", icon: Users },
-        { titulo: "Personal", descripcion: "Directores, secretarias y docentes", ruta: "/director/personal", icon: UserCog },
-        { titulo: "Estudiantes", descripcion: "Gestionar y dar de baja estudiantes", ruta: "/director/estudiantes", icon: GraduationCap },
+        { titulo: "Academia", descripcion: "Editar información de la academia", ruta: "/academias", icon: Building2 },
+        { titulo: "Cursos", descripcion: "Crear, editar y cerrar cursos", ruta: "/cursos", icon: BookOpen },
+        { titulo: "Paralelos", descripcion: "Crear, editar y deshabilitar paralelos", ruta: "/paralelos", icon: CalendarDays },
+        { titulo: "Personal de la academia", descripcion: "Gestionar secretarias y docentes", ruta: "/director/personal", icon: UserCog },
+        { titulo: "Estudiantes", descripcion: "Dar de baja estudiantes", ruta: "/director/estudiantes", icon: GraduationCap },
     ],
     Secretaria: [
-        { titulo: "Cursos", descripcion: "Ver cursos disponibles", ruta: "/cursos", icon: BookOpen },
-        { titulo: "Paralelos", descripcion: "Ver horarios y secciones", ruta: "/paralelos", icon: CalendarDays },
         { titulo: "Matrículas Pendientes", descripcion: "Aprobar, rechazar o cancelar solicitudes", ruta: "/secretaria/matriculas-pendientes", icon: ClipboardCheck },
         { titulo: "Matrícula Manual", descripcion: "Registrar matrícula en casos excepcionales", ruta: "/secretaria/matricula-manual", icon: GraduationCap },
-        { titulo: "Notificar", descripcion: "Enviar notificaciones a estudiantes o docentes", ruta: "/secretaria/notificar", icon: Bell },
+        { titulo: "Notificar", descripcion: "Enviar notificaciones a los usuarios", ruta: "/secretaria/notificar", icon: Bell },
     ],
     Docente: [
         { titulo: "Mis Paralelos", descripcion: "Ver mis cursos y paralelos asignados", ruta: "/docente/mis-paralelos", icon: BookOpen },
