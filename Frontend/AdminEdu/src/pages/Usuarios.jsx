@@ -192,6 +192,10 @@ export default function Usuarios() {
             setCreateError("La contraseña debe tener al menos 8 caracteres.");
             return;
         }
+        if (!createForm.groups || createForm.groups.length === 0) {
+            setCreateError("Debe seleccionar al menos un rol. Sin un rol, el usuario no podrá acceder a ninguna sección tras iniciar sesión.");
+            return;
+        }
 
         try {
             setCreating(true);

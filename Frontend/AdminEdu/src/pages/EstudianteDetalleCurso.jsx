@@ -16,6 +16,7 @@ export default function EstudianteDetalleCurso() {
     const [monto, setMonto] = useState("");
     const [numeroRef, setNumeroRef] = useState("");
     const [comentario, setComentario] = useState("");
+    const [imagenConError, setImagenConError] = useState(false);
 
     useEffect(() => {
         async function load() {
@@ -130,6 +131,16 @@ export default function EstudianteDetalleCurso() {
             </Link>
 
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                {curso?.imagen && !imagenConError && (
+                    <div className="w-full h-56 overflow-hidden">
+                        <img
+                            src={curso.imagen}
+                            alt={curso.nombre}
+                            className="w-full h-full object-cover"
+                            onError={() => setImagenConError(true)}
+                        />
+                    </div>
+                )}
                 <div className="p-8">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                         <h1 className="text-2xl font-bold text-gray-800">{curso?.nombre}</h1>
