@@ -286,12 +286,12 @@ export default function Login() {
                         {/* Separador aspirantes */}
                         <div className="flex items-center my-6">
                             <div className="flex-1 border-t border-white/10"></div>
-                            <span className="px-4 text-xs font-semibold text-emerald-400/60 uppercase tracking-wider">Aspirantes</span>
+                            <span className="px-4 text-xs font-semibold text-emerald-400/60 uppercase tracking-wider">Para estudiantes</span>
                             <div className="flex-1 border-t border-white/10"></div>
                         </div>
 
                         <p className="text-white/40 text-xs text-center mb-4">
-                            ¿Eres aspirante? Ingresa con tu cuenta de Google para solicitar matrícula.
+                            ¿Eres estudiante? Ingresa con tu cuenta de Google para solicitar matrícula.
                         </p>
 
                         <button

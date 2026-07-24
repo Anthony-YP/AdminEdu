@@ -3,7 +3,7 @@ from django.shortcuts import redirect
 from django.contrib.auth import login
 from django.contrib.auth.models import Group
 
-from .models import GRUPO_ASPIRANTE
+from .models import GRUPO_ESTUDIANTE
 from .services.google.google_auth_service import GoogleAuthService
 from .services.google.google_user_service import GoogleUserService
 from .services.auth.jwt_service import JWTService
@@ -47,10 +47,10 @@ def google_callback_process(request):
         )
 
     if not usuario.groups.exists():
-        aspirante_group, _ = Group.objects.get_or_create(
-            name=GRUPO_ASPIRANTE
+        estudiante_group, _ = Group.objects.get_or_create(
+            name=GRUPO_ESTUDIANTE
         )
-        usuario.groups.add(aspirante_group)
+        usuario.groups.add(estudiante_group)
 
     if not GoogleAuthService.is_active(usuario):
         return redirect(

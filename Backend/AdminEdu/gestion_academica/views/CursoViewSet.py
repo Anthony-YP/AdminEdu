@@ -56,7 +56,10 @@ class CursoViewSet(
         url_path="publicos",
     )
     def publicos(self, request):
-        cursos = CursoService.listar_cursos()
+        # Solo se muestran cursos habilitados (ACTIVO): un aspirante o
+        # invitado no debe ver ni poder solicitar cursos desactivados o
+        # cerrados.
+        cursos = CursoService.listar_cursos().filter(estado=EstadoCurso.ACTIVO)
         serializer = CursoSerializer(cursos, many=True, context={"request": request})
         return Response(serializer.data)
 
@@ -92,8 +95,13 @@ class CursoViewSet(
             fecha_fin=serializer.validated_data["fecha_fin"],
         )
 
-        response_serializer = self.get_serializer(
-            curso
+        # Respuesta completa (no CursoCreateSerializer): el frontend guarda
+        # este resultado directamente en su estado local, y CursoCreateSerializer
+        # no incluye "id", "estado" ni "paralelos" — sin esto, un curso recién
+        # creado quedaba con id indefinido hasta el próximo refresco.
+        response_serializer = CursoSerializer(
+            curso,
+            context={"request": request},
         )
 
         return Response(
@@ -164,8 +172,12 @@ class CursoViewSet(
             ),
         )
 
-        response_serializer = self.get_serializer(
-            curso
+        # Misma razón que en create(): se devuelve el curso completo, no la
+        # forma reducida de CursoCreateSerializer, para que el estado local
+        # del frontend (id, estado, paralelos) no quede corrupto tras editar.
+        response_serializer = CursoSerializer(
+            curso,
+            context={"request": request},
         )
 
         return Response(

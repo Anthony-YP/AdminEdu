@@ -11,6 +11,9 @@ class MatriculaSerializer(
     estudiante_identificacion = serializers.CharField(
         source="estudiante.numero_identificacion", read_only=True
     )
+    curso_id = serializers.IntegerField(
+        source="paralelo_matricula.curso.id", read_only=True
+    )
     curso_nombre = serializers.CharField(
         source="paralelo_matricula.curso.nombre", read_only=True
     )
@@ -34,6 +37,7 @@ class MatriculaSerializer(
             "estudiante_nombre",
             "estudiante_identificacion",
             "paralelo_matricula",
+            "curso_id",
             "curso_nombre",
             "paralelo_nombre",
             "comprobante_pago",

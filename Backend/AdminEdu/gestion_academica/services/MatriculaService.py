@@ -257,6 +257,53 @@ class MatriculaService:
 
     @staticmethod
     @transaction.atomic
+    def reenviar_matricula(
+        matricula,
+        paralelo,
+        tipo_pago,
+        monto,
+        numero_ref,
+        comprobante_archivo=None,
+    ):
+        """
+        Permite al estudiante reenviar una matrícula que fue rechazada,
+        opcionalmente cambiando de paralelo y/o reemplazando el
+        comprobante de pago. Vuelve a quedar como PENDIENTE para que
+        secretaría la revise de nuevo.
+        """
+
+        if matricula.estado != EstadoMatricula.RECHAZADA:
+            raise ValidationError(
+                "Solo se pueden reenviar matrículas rechazadas."
+            )
+
+        MatriculaService.validar_paralelo_activo(paralelo)
+
+        MatriculaService.validar_cupo(paralelo)
+
+        comprobante = matricula.comprobante_pago
+        comprobante.tipo_pago = tipo_pago
+        comprobante.monto = monto
+        comprobante.numero_ref = numero_ref or None
+        comprobante.fecha = timezone.now().date()
+
+        if comprobante_archivo:
+            comprobante.tipo_archivo = comprobante_archivo
+
+        comprobante.save()
+
+        matricula.paralelo_matricula = paralelo
+        matricula.estado = EstadoMatricula.PENDIENTE
+        matricula.fecha_solicitud = timezone.now().date()
+        matricula.fecha_aprobacion = None
+        matricula.comentario = ""
+
+        matricula.save()
+
+        return matricula
+
+    @staticmethod
+    @transaction.atomic
     def crear_matricula_manual(
         estudiante,
         paralelo,

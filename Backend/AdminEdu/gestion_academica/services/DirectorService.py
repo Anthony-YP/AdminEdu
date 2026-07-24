@@ -81,12 +81,6 @@ class DirectorService(PersonaService, BaseService):
         estudiante,
         motivo
     ):
-        """
-        RF27:
-        Desactiva la cuenta del estudiante (impidiéndole iniciar
-        sesión, ver RF32) dejando registrado el motivo y la fecha
-        de la baja.
-        """
 
         if not motivo or not motivo.strip():
 

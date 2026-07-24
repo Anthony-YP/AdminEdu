@@ -70,10 +70,6 @@ class DocenteService(PersonaService, BaseService):
 
     @staticmethod
     def validar_matricula_del_docente(matricula, docente):
-        """
-        RF24: un docente solo puede registrar/modificar asistencia
-        de estudiantes matriculados en paralelos a su cargo.
-        """
 
         if matricula.paralelo_matricula.docente_id != docente.pk:
             raise ValidationError(
@@ -84,10 +80,6 @@ class DocenteService(PersonaService, BaseService):
     @staticmethod
     @transaction.atomic
     def registrar_asistencia(matricula, docente, fecha, presente):
-        """
-        RF24: registra (o actualiza si ya existe para esa fecha)
-        la asistencia de un estudiante matriculado.
-        """
 
         from gestion_academica.models.matricula.Matricula import Asistencia
 
@@ -104,12 +96,6 @@ class DocenteService(PersonaService, BaseService):
     @staticmethod
     @transaction.atomic
     def registrar_asistencia_bulk(paralelo, docente, fecha, registros):
-        """
-        RF24: registra la asistencia de todos los estudiantes de un
-        paralelo (a cargo del docente) para una fecha determinada.
-
-        `registros` es una lista de {"matricula_id": int, "presente": bool}.
-        """
 
         from gestion_academica.models.matricula.Matricula import Matricula
 

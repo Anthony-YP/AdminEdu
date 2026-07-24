@@ -85,9 +85,13 @@ class PerfilCompletadoView(APIView):
         user = request.user
         grupos = list(user.groups.values_list("name", flat=True))
 
-        if "Aspirante" not in grupos:
+        # Aspirante: aún solicitando su primera matrícula. Estudiante: entró
+        # con Google y ya tiene el rol de estudiante, pero todavía no tiene
+        # datos personales registrados (Persona) — también debe poder
+        # completarlos.
+        if "Aspirante" not in grupos and "Estudiante" not in grupos:
             return Response(
-                {"detail": "No eres un aspirante."},
+                {"detail": "No tienes permiso para completar este perfil."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -260,7 +264,7 @@ class AspiranteSolicitudesView(APIView):
 
 
 class AspiranteMatriculaView(APIView):
-    """Permite a un aspirante solicitar matrícula con comprobante de pago."""
+    """Permite a un aspirante o estudiante solicitar matrícula con comprobante de pago."""
 
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -270,9 +274,12 @@ class AspiranteMatriculaView(APIView):
         user = request.user
         grupos = list(user.groups.values_list("name", flat=True))
 
-        if "Aspirante" not in grupos:
+        # Aspirante: solicitando su primera matrícula. Estudiante: entró con
+        # Google (ya tiene el rol de estudiante) y solicita una matrícula
+        # adicional desde el portal de estudiante.
+        if "Aspirante" not in grupos and "Estudiante" not in grupos:
             return Response(
-                {"detail": "No eres un aspirante."},
+                {"detail": "No tienes permiso para solicitar una matrícula."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

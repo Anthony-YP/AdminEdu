@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 
 from usuarios.models import (
-    GRUPO_ASPIRANTE,
+    GRUPO_ESTUDIANTE,
 )
 
 User = get_user_model()
@@ -24,7 +24,7 @@ class GoogleUserService:
         Busca un usuario por correo.
 
         Si no existe,
-        lo crea y lo registra como Aspirante.
+        lo crea y lo registra como Estudiante.
         """
 
         usuario, creado = User.objects.get_or_create(
@@ -39,8 +39,8 @@ class GoogleUserService:
 
         if creado:
 
-            grupo = Group.objects.get(
-                name=GRUPO_ASPIRANTE
+            grupo, _ = Group.objects.get_or_create(
+                name=GRUPO_ESTUDIANTE
             )
 
             usuario.groups.add(grupo)

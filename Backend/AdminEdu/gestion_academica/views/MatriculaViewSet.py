@@ -69,6 +69,8 @@ class MatriculaViewSet(
 
         "culminar": EsSecretaria,
 
+        "reenviar": EsEstudiante,
+
     }
 
     def get_serializer_class(self):
@@ -343,6 +345,65 @@ class MatriculaViewSet(
         return Response(
             response_serializer.data,
             status=status.HTTP_201_CREATED
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="reenviar"
+    )
+    def reenviar(
+        self,
+        request,
+        pk=None
+    ):
+        """
+        RF: el estudiante reenvía una matrícula RECHAZADA, opcionalmente
+        con un paralelo distinto y/o un nuevo comprobante de pago.
+        `get_queryset` ya limita esta vista a las matrículas del propio
+        estudiante, así que `get_object` protege contra editar ajenas.
+        """
+
+        matricula = self.get_object()
+
+        paralelo_id = request.data.get(
+            "paralelo_matricula",
+            matricula.paralelo_matricula_id
+        )
+
+        try:
+            paralelo = Paralelo.objects.get(id=paralelo_id)
+        except Paralelo.DoesNotExist:
+            return Response(
+                {"detail": "El paralelo indicado no existe."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        comprobante_actual = matricula.comprobante_pago
+
+        try:
+            matricula = MatriculaService.reenviar_matricula(
+                matricula=matricula,
+                paralelo=paralelo,
+                tipo_pago=request.data.get("tipo_pago", comprobante_actual.tipo_pago),
+                monto=request.data.get("monto", comprobante_actual.monto),
+                numero_ref=request.data.get("numero_ref", comprobante_actual.numero_ref),
+                comprobante_archivo=request.data.get("comprobante"),
+            )
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = MatriculaSerializer(
+            matricula,
+            context={"request": request},
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
         )
 
     @action(

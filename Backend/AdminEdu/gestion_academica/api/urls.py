@@ -22,6 +22,7 @@ from gestion_academica.views.AspiranteViewSet import (
     EstudianteHistorialView,
     PerfilCompletadoView,
 )
+from gestion_academica.views.PublicoView import InstitucionPublicaView
 
 router = DefaultRouter()
 
@@ -45,4 +46,5 @@ urlpatterns = router.urls + [
     path("aspirante/solicitudes/", AspiranteSolicitudesView.as_view(), name="aspirante-solicitudes"),
     path("aspirante/solicitar-matricula/", AspiranteMatriculaView.as_view(), name="aspirante-solicitar-matricula"),
     path("estudiante/historial/", EstudianteHistorialView.as_view(), name="estudiante-historial"),
+    path("institucion/", InstitucionPublicaView.as_view(), name="institucion-publica"),
 ]

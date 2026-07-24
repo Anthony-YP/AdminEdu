@@ -59,7 +59,7 @@ export default function Header() {
                     </svg>
                 </div>
                 <span className="text-xl font-bold text-white tracking-tight flex-1">AdminEdu</span>
-                <NotificationBell verTodasRuta={rutaNotificaciones} />
+                <NotificationBell verTodasRuta={rutaNotificaciones} align="left" />
             </div>
 
             {/* Navigation */}

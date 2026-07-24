@@ -1,15 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../api/api";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
-
-const ESTADO_VARIANT = {
-  Pendiente: "yellow",
-  Aprobada: "blue",
-  Rechazada: "red",
-  Cancelada: "gray",
-  Finalizada: "green",
-};
+import { Award } from "lucide-react";
 
 export default function EstudianteHistorial() {
   const [matriculas, setMatriculas] = useState([]);
@@ -30,29 +23,53 @@ export default function EstudianteHistorial() {
     cargar();
   }, []);
 
+  // Solo se listan los cursos con un resultado final ya registrado
+  // (aprobado o reprobado); una matrícula sin calificación aún no cuenta.
+  const finalizadas = useMemo(
+    () => matriculas.filter((m) => m.aprobado !== null && m.aprobado !== undefined),
+    [matriculas]
+  );
+
+  const totalAprobados = finalizadas.filter((m) => m.aprobado).length;
+  const totalReprobados = finalizadas.length - totalAprobados;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Historial Académico</h1>
-        <p className="text-sm text-gray-500">Revisa tus cursos, horarios, asistencia y resultados académicos.</p>
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <Award className="w-6 h-6 text-blue-600" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Historial Académico</h1>
+          <p className="text-sm text-gray-500">Cursos completados.</p>
+        </div>
       </div>
 
       {error && <div className="text-red-600 text-sm">{error}</div>}
 
+      {!loading && finalizadas.length > 0 && (
+        <div className="flex gap-3">
+          <Badge variant="green" className="text-sm px-4 py-1.5">{totalAprobados} aprobado{totalAprobados === 1 ? "" : "s"}</Badge>
+          <Badge variant="red" className="text-sm px-4 py-1.5">{totalReprobados} reprobado{totalReprobados === 1 ? "" : "s"}</Badge>
+        </div>
+      )}
+
       <div className="grid gap-4">
         {loading ? (
           <div className="text-gray-500">Cargando historial...</div>
-        ) : matriculas.length === 0 ? (
-          <div className="text-gray-500">Aún no tienes matrículas registradas.</div>
-        ) : matriculas.map((m) => (
-          <Card key={m.id}>
+        ) : finalizadas.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-12 text-center text-gray-500">
+            Aún no tienes cursos con un resultado final registrado.
+          </div>
+        ) : finalizadas.map((m) => (
+          <Card key={m.id} className={`border-l-4 ${m.aprobado ? "border-l-emerald-500" : "border-l-red-500"}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{m.curso_nombre} — Paralelo {m.paralelo}</CardTitle>
-                <Badge variant={ESTADO_VARIANT[m.estado] || "gray"}>{m.estado}</Badge>
+                <Badge variant={m.aprobado ? "green" : "red"}>{m.aprobado ? "Aprobado" : "Reprobado"}</Badge>
               </div>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-xs text-gray-400 uppercase font-medium">Horario</p>
                 <p className="text-gray-700">
@@ -71,13 +88,7 @@ export default function EstudianteHistorial() {
               <div>
                 <p className="text-xs text-gray-400 uppercase font-medium">Nota Final</p>
                 <p className="text-gray-700 font-semibold">
-                  {m.nota_final ?? "Pendiente"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase font-medium">Resultado</p>
-                <p className="text-gray-700 font-semibold">
-                  {m.aprobado === null || m.aprobado === undefined ? "—" : m.aprobado ? "Aprobado" : "No aprobado"}
+                  {m.nota_final ?? "—"}
                 </p>
               </div>
             </CardContent>

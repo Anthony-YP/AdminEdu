@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../../api/api";
 import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
+import { Badge } from "../../components/ui/Badge";
+import { Award } from "lucide-react";
+
+const NOTA_APROBACION = 7;
 
 export default function RegistrarCalificaciones() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -56,6 +60,11 @@ export default function RegistrarCalificaciones() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paraleloId]);
 
+    const paraleloActual = useMemo(
+        () => paralelos.find((p) => String(p.id) === String(paraleloId)) || null,
+        [paralelos, paraleloId]
+    );
+
     const handleParaleloChange = (id) => {
         setParaleloId(id);
         setSearchParams(id ? { paralelo: id } : {});
@@ -95,20 +104,25 @@ export default function RegistrarCalificaciones() {
     };
 
     return (
-        <div className="max-w-3xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Registrar Calificaciones</h1>
-                <p className="text-sm text-gray-500 mt-1">Nota final (0-10) por estudiante.</p>
+        <div className="max-w-3xl mx-auto space-y-6">
+            <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Award className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Registrar Calificaciones</h1>
+                    <p className="text-sm text-gray-500">Nota final (0-10) por estudiante. Aprueba con {NOTA_APROBACION} o más.</p>
+                </div>
             </div>
 
             {success && <Alert variant="success">{success}</Alert>}
             {error && <Alert variant="error">{error}</Alert>}
 
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Paralelo</label>
                     <select
-                        className="w-full rounded border px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         value={paraleloId}
                         onChange={(e) => handleParaleloChange(e.target.value)}
                         disabled={loadingParalelos}
@@ -123,26 +137,39 @@ export default function RegistrarCalificaciones() {
                 {loadingEstudiantes ? (
                     <div className="text-gray-500 text-sm">Cargando estudiantes...</div>
                 ) : estudiantes.length > 0 ? (
-                    <div className="divide-y divide-gray-100 border rounded-lg">
-                        {estudiantes.map((e) => (
-                            <div key={e.matricula_id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-800">{e.nombres} {e.apellidos}</p>
-                                    <p className="text-xs text-gray-400">{e.numero_identificacion}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="number" min="0" max="10" step="0.01"
-                                        className="w-20 rounded border px-2 py-1 text-sm text-right"
-                                        value={notas[e.matricula_id] ?? ""}
-                                        onChange={(ev) => setNotas((prev) => ({ ...prev, [e.matricula_id]: ev.target.value }))}
-                                    />
-                                    <Button size="sm" onClick={() => handleGuardarNota(e)} isLoading={!!guardando[e.matricula_id]}>
-                                        {e.calificacion_final_id ? "Actualizar" : "Guardar"}
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
+                    <div>
+                        {paraleloActual && (
+                            <p className="text-xs text-gray-400 mb-3">{paraleloActual.curso_nombre} - {paraleloActual.nombre} · {estudiantes.length} estudiante(s)</p>
+                        )}
+                        <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
+                            {estudiantes.map((e) => {
+                                const notaActual = notas[e.matricula_id];
+                                const notaGuardada = e.nota_final !== undefined && e.nota_final !== null && e.nota_final !== "";
+                                const aprobado = notaGuardada && Number(e.nota_final) >= NOTA_APROBACION;
+                                return (
+                                    <div key={e.matricula_id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/50">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium text-gray-800 truncate">{e.nombres} {e.apellidos}</p>
+                                            <p className="text-xs text-gray-400">{e.numero_identificacion}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            {notaGuardada && (
+                                                <Badge variant={aprobado ? "green" : "red"}>{aprobado ? "Aprobado" : "Reprobado"}</Badge>
+                                            )}
+                                            <input
+                                                type="number" min="0" max="10" step="0.01"
+                                                className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                value={notaActual ?? ""}
+                                                onChange={(ev) => setNotas((prev) => ({ ...prev, [e.matricula_id]: ev.target.value }))}
+                                            />
+                                            <Button size="sm" onClick={() => handleGuardarNota(e)} isLoading={!!guardando[e.matricula_id]}>
+                                                {e.calificacion_final_id ? "Actualizar" : "Guardar"}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : paraleloId ? (
                     <div className="text-gray-500 text-sm">Este paralelo no tiene estudiantes matriculados.</div>

@@ -99,6 +99,13 @@ export default function MatriculaManual() {
         [estudiantesActivos]
     );
 
+    const handleCancelar = () => {
+        setForm({ estudiante: "", paralelo_matricula: "", tipo_pago: "EFECTIVO", monto: "", numero_ref: "" });
+        setComprobante(null);
+        setError("");
+        setSuccess("");
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -214,7 +221,7 @@ export default function MatriculaManual() {
     };
 
     return (
-        <div className="max-w-2xl space-y-6">
+        <div className="max-w-2xl mx-auto space-y-6">
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Matrícula Manual</h1>
                 <p className="text-sm text-gray-500 mt-1">Registra manualmente la matrícula de un estudiante en casos excepcionales.</p>
@@ -296,7 +303,12 @@ export default function MatriculaManual() {
                         {comprobante && <p className="text-xs text-emerald-600 mt-1">Archivo: {comprobante.name}</p>}
                     </div>
 
-                    <Button type="submit" isLoading={submitting}>Registrar matrícula</Button>
+                    <div className="flex justify-end gap-3 border-t pt-4">
+                        <Button type="button" variant="secondary" onClick={handleCancelar} disabled={submitting}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" isLoading={submitting}>Registrar matrícula</Button>
+                    </div>
                 </form>
             )}
 

@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import api from "../api/api";
 import { Badge } from "../components/ui/Badge";
 import {
     Building2,
@@ -56,6 +57,26 @@ export default function Dashboard() {
     const { usuario } = useAuth();
     const navigate = useNavigate();
 
+    // Nombre de pila de la persona (Director/Secretaria/Docente/...), para
+    // saludar por su nombre real en vez del username de la cuenta.
+    const [primerNombre, setPrimerNombre] = useState(null);
+
+    useEffect(() => {
+        const cargarPersona = async () => {
+            try {
+                const { data } = await api.get("/personas/");
+                const persona = data?.[0];
+                if (persona?.nombres) {
+                    setPrimerNombre(persona.nombres.trim().split(/\s+/)[0]);
+                }
+            } catch {
+                // Si no hay persona asociada (ej. cuenta de administrador
+                // pura), simplemente se sigue mostrando el username.
+            }
+        };
+        cargarPersona();
+    }, []);
+
     // Roles del usuario que efectivamente tienen módulos definidos. Un
     // Administrador ve la unión de todos los módulos existentes, igual que
     // el resto de las pantallas (bypass ya aplicado en hasRole/hasGroup).
@@ -95,10 +116,12 @@ export default function Dashboard() {
 
     const grupoPrincipal = usuario.groups[0];
 
+    const nombreMostrado = primerNombre || usuario?.username;
+
     // Extraer iniciales para el avatar
-    const getInitials = (username) => {
-        if (!username) return "U";
-        return username.charAt(0).toUpperCase();
+    const getInitials = (nombre) => {
+        if (!nombre) return "U";
+        return nombre.charAt(0).toUpperCase();
     };
 
     return (
@@ -122,10 +145,10 @@ export default function Dashboard() {
                     <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/20">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg ring-2 ring-white/30">
-                                {getInitials(usuario?.username)}
+                                {getInitials(nombreMostrado)}
                             </div>
                             <div className="text-white">
-                                <p className="font-semibold text-sm">{usuario?.username}</p>
+                                <p className="font-semibold text-sm">{nombreMostrado}</p>
                                 <p className="text-xs text-blue-200">{usuario?.email}</p>
                             </div>
                         </div>

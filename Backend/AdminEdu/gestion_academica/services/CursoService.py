@@ -76,9 +76,12 @@ class CursoService:
 
         nombre = nombre.strip()
 
+
         curso_existente = Curso.objects.filter(
             academia=academia,
             nombre__iexact=nombre
+        ).exclude(
+            estado=EstadoCurso.CERRADO
         ).exists()
 
         if curso_existente:
@@ -153,6 +156,8 @@ class CursoService:
             nombre__iexact=nombre
         ).exclude(
             pk=curso.pk
+        ).exclude(
+            estado=EstadoCurso.CERRADO
         ).exists()
 
         if curso_existente:
@@ -194,12 +199,6 @@ class CursoService:
     @staticmethod
     @transaction.atomic
     def cerrar_cursos_vencidos():
-        """
-        RF20:
-        Cierra automáticamente (de forma perezosa, al consultar)
-        cualquier curso cuya fecha de fin ya pasó y que todavía
-        no esté marcado como CERRADO.
-        """
 
         cursos_a_cerrar = Curso.objects.filter(
             fecha_fin__lt=timezone.now().date()
@@ -261,11 +260,7 @@ class CursoService:
 
     @staticmethod
     def eliminar_curso(curso: Curso):
-        """
-        Da de baja lógica a un curso (lo desactiva) en vez de
-        borrarlo físicamente, para preservar el historial de
-        matrículas, asistencia y calificaciones asociado.
-        """
+
         if curso is None:
             raise ValidationError(
                 "El curso no existe."
