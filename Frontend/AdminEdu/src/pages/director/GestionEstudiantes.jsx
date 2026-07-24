@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../api/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/Table";
 import { Button } from "../../components/ui/Button";
@@ -10,6 +10,7 @@ export default function GestionEstudiantes() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [busqueda, setBusqueda] = useState("");
 
     const [modal, setModal] = useState(null);
     const [motivo, setMotivo] = useState("");
@@ -39,6 +40,15 @@ export default function GestionEstudiantes() {
         }
     };
 
+    const estudiantesFiltrados = useMemo(() => {
+        const q = busqueda.trim().toLowerCase();
+        if (!q) return estudiantes;
+        return estudiantes.filter((est) => {
+            const nombreCompleto = `${est.nombres} ${est.apellidos}`.toLowerCase();
+            return nombreCompleto.includes(q) || (est.numero_identificacion || "").toLowerCase().includes(q);
+        });
+    }, [estudiantes, busqueda]);
+
     const abrirModal = (estudiante) => {
         setModal(estudiante);
         setMotivo("");
@@ -65,13 +75,28 @@ export default function GestionEstudiantes() {
             <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     Estudiantes
-                    <span className="text-sm font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{estudiantes.length}</span>
+                    <span className="text-sm font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        {estudiantesFiltrados.length} de {estudiantes.length}
+                    </span>
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">Gestión de estudiantes registrados.</p>
             </div>
 
             {success && <Alert variant="success">{success}</Alert>}
             {error && <Alert variant="error">{error}</Alert>}
+
+            <div className="relative max-w-sm">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                    type="text"
+                    placeholder="Buscar por nombre o identificación..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+            </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <Table>
@@ -87,17 +112,21 @@ export default function GestionEstudiantes() {
                     <TableBody>
                         {loading ? (
                             <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">Cargando...</TableCell></TableRow>
-                        ) : estudiantes.length === 0 ? (
-                            <TableRow><TableCell colSpan={5} className="text-center text-gray-500 py-8">No hay estudiantes registrados.</TableCell></TableRow>
+                        ) : estudiantesFiltrados.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                                    {estudiantes.length === 0 ? "No hay estudiantes registrados." : "Ningún estudiante coincide con la búsqueda."}
+                                </TableCell>
+                            </TableRow>
                         ) : (
-                            estudiantes.map((est) => (
+                            estudiantesFiltrados.map((est) => (
                                 <TableRow key={est.id} className="hover:bg-gray-50/50">
                                     <TableCell className="font-medium text-gray-900">{est.nombres} {est.apellidos}</TableCell>
                                     <TableCell>{est.numero_identificacion}</TableCell>
                                     <TableCell>{est.correo}</TableCell>
                                     <TableCell>
                                         {est.fecha_baja ? (
-                                            <Badge variant="gray">Dado de baja ({est.fecha_baja})</Badge>
+                                            <Badge variant="red">Dado de baja ({est.fecha_baja})</Badge>
                                         ) : (
                                             <Badge variant="green">Activo</Badge>
                                         )}

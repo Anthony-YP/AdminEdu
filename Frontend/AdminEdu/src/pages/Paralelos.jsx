@@ -382,7 +382,7 @@ export default function Paralelos() {
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <span className="font-semibold text-gray-800">{paralelo.nombre}</span>
-                                                        <Badge variant={paralelo.estado === "ACTIVO" ? "green" : "gray"}>{paralelo.estado}</Badge>
+                                                        <Badge variant={paralelo.estado === "ACTIVO" ? "green" : "red"}>{paralelo.estado}</Badge>
                                                     </div>
                                                     <div className="text-sm text-gray-500 mt-0.5">
                                                         {Array.isArray(paralelo.dias_clase) ? paralelo.dias_clase.join(", ") : paralelo.dias_clase}

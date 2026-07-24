@@ -83,6 +83,13 @@ export default function MatriculaManual() {
         [estudiantes]
     );
 
+    // Un paralelo desactivado (temporal o permanentemente, por cierre de su
+    // curso) no puede recibir matrículas nuevas.
+    const paralelosActivos = useMemo(
+        () => paralelos.filter((p) => p.estado === "ACTIVO"),
+        [paralelos]
+    );
+
     const estudianteOptions = useMemo(
         () => estudiantesActivos.map((e) => ({
             value: e.id.toString(),
@@ -242,7 +249,7 @@ export default function MatriculaManual() {
                         value={form.paralelo_matricula}
                         onChange={(e) => setForm((f) => ({ ...f, paralelo_matricula: e.target.value }))}
                         required
-                        options={paralelos.map((p) => ({
+                        options={paralelosActivos.map((p) => ({
                             value: p.id.toString(),
                             label: `${p.curso_nombre ? p.curso_nombre + " - " : ""}${p.nombre} (cupo ${p.cupo_max})`,
                         }))}

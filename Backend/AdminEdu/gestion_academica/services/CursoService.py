@@ -10,6 +10,7 @@ from gestion_academica.models.academia.Academia import (
     Curso,
 )
 from gestion_academica.models.academia.estado_curso import EstadoCurso
+from gestion_academica.models.academia.estado_paralelo import EstadoParalelo
 
 
 class CursoService:
@@ -117,6 +118,11 @@ class CursoService:
                 "El curso no existe."
             )
 
+        if curso.estado == EstadoCurso.CERRADO:
+            raise ValidationError(
+                "El curso está cerrado y ya no puede editarse."
+            )
+
         if academia is None:
             raise ValidationError(
                 "La academia es obligatoria."
@@ -126,7 +132,7 @@ class CursoService:
             raise ValidationError(
                 "El nombre del curso es obligatorio."
             )
-        
+
         if not descripcion or not descripcion.strip():
             raise ValidationError(
                 "La descripción del curso es obligatoria."
@@ -168,6 +174,25 @@ class CursoService:
         return curso
 
     @staticmethod
+    def _desactivar_paralelos(curso_ids):
+        """
+        Al cerrar un curso (manual o automáticamente), sus paralelos
+        quedan desactivados permanentemente: mientras el curso siga
+        cerrado, ParaleloService.cambiar_estado rechaza reactivarlos.
+        """
+
+        from gestion_academica.models.academia.Academia import Paralelo
+
+        Paralelo.objects.filter(
+            curso_id__in=curso_ids
+        ).exclude(
+            estado=EstadoParalelo.DESACTIVADO
+        ).update(
+            estado=EstadoParalelo.DESACTIVADO
+        )
+
+    @staticmethod
+    @transaction.atomic
     def cerrar_cursos_vencidos():
         """
         RF20:
@@ -176,13 +201,22 @@ class CursoService:
         no esté marcado como CERRADO.
         """
 
-        Curso.objects.filter(
+        cursos_a_cerrar = Curso.objects.filter(
             fecha_fin__lt=timezone.now().date()
         ).exclude(
             estado=EstadoCurso.CERRADO
-        ).update(
+        )
+
+        ids = list(cursos_a_cerrar.values_list("id", flat=True))
+
+        if not ids:
+            return
+
+        cursos_a_cerrar.update(
             estado=EstadoCurso.CERRADO
         )
+
+        CursoService._desactivar_paralelos(ids)
 
     @staticmethod
     def listar_cursos():
@@ -195,6 +229,7 @@ class CursoService:
         return Curso.objects.all().order_by("nombre")
 
     @staticmethod
+    @transaction.atomic
     def cambiar_estado(curso: Curso, nuevo_estado: str) -> Curso:
         """
         RF18/RF21:
@@ -211,8 +246,16 @@ class CursoService:
                 "El estado indicado no es válido."
             )
 
+        if curso.estado == EstadoCurso.CERRADO and nuevo_estado != EstadoCurso.CERRADO:
+            raise ValidationError(
+                "Un curso cerrado no puede reabrirse ni cambiar de estado."
+            )
+
         curso.estado = nuevo_estado
         curso.save(update_fields=["estado"])
+
+        if nuevo_estado == EstadoCurso.CERRADO:
+            CursoService._desactivar_paralelos([curso.id])
 
         return curso
 

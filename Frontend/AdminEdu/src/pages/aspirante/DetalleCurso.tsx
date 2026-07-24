@@ -212,15 +212,19 @@ export default function DetalleCurso() {
                         <div className="mb-6">
                             <h3 className="font-semibold text-slate-800 mb-3">Paralelos Disponibles</h3>
                             <div className="space-y-3">
-                                {curso.paralelos.map((p) => (
+                                {curso.paralelos.map((p) => {
+                                    const disponible = p.estado === "ACTIVO";
+                                    return (
                                     <div
                                         key={p.id}
-                                        className={`border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
-                                            paraleloId === p.id
-                                                ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200"
-                                                : "border-slate-200 hover:border-slate-300"
+                                        className={`border rounded-xl p-4 transition-all duration-200 ${
+                                            !disponible
+                                                ? "border-slate-200 opacity-60 cursor-not-allowed"
+                                                : paraleloId === p.id
+                                                ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200 cursor-pointer"
+                                                : "border-slate-200 hover:border-slate-300 cursor-pointer"
                                         }`}
-                                        onClick={() => setParaleloId(p.id)}
+                                        onClick={() => disponible && setParaleloId(p.id)}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -243,18 +247,19 @@ export default function DetalleCurso() {
                                         </div>
                                         <div className="mt-2 ml-7">
                                             <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                                p.estado === "ACTIVO"
+                                                disponible
                                                     ? "bg-emerald-100 text-emerald-700"
                                                     : "bg-red-100 text-red-700"
                                             }`}>
-                                                {p.estado === "ACTIVO" ? "Activo" : "Inactivo"}
+                                                {disponible ? "Activo" : "No disponible"}
                                             </span>
                                             <span className="text-xs text-slate-400 ml-2">
                                                 Cupos: {p.cupo_max}
                                             </span>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

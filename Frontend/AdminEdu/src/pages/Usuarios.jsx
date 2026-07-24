@@ -348,7 +348,7 @@ export default function Usuarios() {
                                                 disabled={cambiandoEstado === usuario.id || usuario.id === user?.id}
                                                 title={usuario.id === user?.id ? "No puedes desactivar tu propia cuenta" : ""}
                                             >
-                                                <Badge variant={usuario.is_active ? "green" : "gray"} className="cursor-pointer">
+                                                <Badge variant={usuario.is_active ? "green" : "red"} className="cursor-pointer">
                                                     {usuario.is_active ? "Activo" : "Inactivo"}
                                                 </Badge>
                                             </button>

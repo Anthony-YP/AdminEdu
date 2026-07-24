@@ -154,7 +154,7 @@ export default function MatriculasPendientes() {
                                             <Button variant="ghostDanger" size="sm" onClick={() => abrirModal("rechazar", m)}>
                                                 Rechazar
                                             </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => abrirModal("cancelar", m)}>
+                                            <Button variant="ghostDanger" size="sm" onClick={() => abrirModal("cancelar", m)}>
                                                 Cancelar
                                             </Button>
                                         </div>

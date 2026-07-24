@@ -6,6 +6,7 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
+import { Lock } from "lucide-react";
 
 const FORM_VACIO = {
     id: null,
@@ -45,6 +46,7 @@ export default function Cursos() {
 
     // Cambio de estado (baja lógica: Activo/Desactivado/Cerrado)
     const [cambiandoEstado, setCambiandoEstado] = useState(null);
+    const [confirmCierre, setConfirmCierre] = useState(null);
 
     // Cargar cursos y academias al montar
     useEffect(() => {
@@ -239,6 +241,27 @@ export default function Cursos() {
         }
     };
 
+    // Seleccionar "Cerrado" no aplica el cambio de inmediato: primero se pide
+    // confirmación explicando que la acción es permanente. Como el <select>
+    // es un elemento nativo, el navegador ya movió su valor visible al elegir
+    // la opción; si el usuario cancela, React no lo revierte solo porque la
+    // prop `value` no cambió entre renders, así que se fuerza aquí.
+    const handleSeleccionarEstado = (curso, e) => {
+        const nuevoEstado = e.target.value;
+        if (nuevoEstado === "CERRADO") {
+            e.target.value = curso.estado;
+            setConfirmCierre(curso);
+            return;
+        }
+        handleCambiarEstado(curso, nuevoEstado);
+    };
+
+    const handleConfirmarCierre = async () => {
+        if (!confirmCierre) return;
+        await handleCambiarEstado(confirmCierre, "CERRADO");
+        setConfirmCierre(null);
+    };
+
     // ─── Renderizado condicional ──────────────────────────────────────
 
     if (loading) {
@@ -360,7 +383,8 @@ export default function Cursos() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {cursosFiltrados.map((curso) => {
-                        const variant = curso.estado === "ACTIVO" ? "green" : curso.estado === "CERRADO" ? "gray" : "yellow";
+                        const variant = curso.estado === "ACTIVO" ? "green" : "red";
+                        const cerrado = curso.estado === "CERRADO";
                         const paralelos = curso.paralelos || [];
                         const expandido = cursoExpandido === curso.id;
 
@@ -379,7 +403,10 @@ export default function Cursos() {
                                 <div className="p-4 flex-1 flex flex-col gap-2">
                                     <div className="flex items-start justify-between gap-2">
                                         <h3 className="font-semibold text-gray-900 leading-tight">{curso.nombre}</h3>
-                                        <Badge variant={variant}>{curso.estado}</Badge>
+                                        <Badge variant={variant} className="flex items-center gap-1">
+                                            {cerrado && <Lock className="w-3 h-3" />}
+                                            {curso.estado}
+                                        </Badge>
                                     </div>
                                     <Badge variant="blue" className="self-start">{curso.academia_nombre}</Badge>
                                     {curso.descripcion && (
@@ -412,7 +439,7 @@ export default function Cursos() {
                                                     <div key={p.id} className="flex items-center justify-between text-xs">
                                                         <span className="text-gray-700 font-medium">{p.nombre}</span>
                                                         <span className="text-gray-400">{p.docente_nombre || "Sin docente"}</span>
-                                                        <Badge variant={p.estado === "ACTIVO" ? "green" : "gray"} className="text-[10px] py-0">{p.estado}</Badge>
+                                                        <Badge variant={p.estado === "ACTIVO" ? "green" : "red"} className="text-[10px] py-0">{p.estado}</Badge>
                                                     </div>
                                                 ))
                                             )}
@@ -422,19 +449,28 @@ export default function Cursos() {
 
                                 {esDirector && (
                                     <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between gap-2 bg-gray-50/50">
-                                        <Button variant="ghost" size="sm" onClick={() => handleOpenForm(curso)} className="text-blue-600 hover:bg-blue-50">
-                                            Editar
-                                        </Button>
-                                        <select
-                                            className="text-xs border rounded px-1.5 py-1"
-                                            value={curso.estado}
-                                            disabled={cambiandoEstado === curso.id}
-                                            onChange={(e) => handleCambiarEstado(curso, e.target.value)}
-                                        >
-                                            <option value="ACTIVO">Activo</option>
-                                            <option value="DESACTIVADO">Desactivado</option>
-                                            <option value="CERRADO">Cerrado</option>
-                                        </select>
+                                        {cerrado ? (
+                                            <p className="text-xs text-red-600 flex items-center gap-1.5">
+                                                <Lock className="w-3.5 h-3.5" />
+                                                Cerrado: ya no puede editarse ni reabrirse.
+                                            </p>
+                                        ) : (
+                                            <>
+                                                <Button variant="ghost" size="sm" onClick={() => handleOpenForm(curso)} className="text-blue-600 hover:bg-blue-50">
+                                                    Editar
+                                                </Button>
+                                                <select
+                                                    className="text-xs border rounded px-1.5 py-1"
+                                                    value={curso.estado}
+                                                    disabled={cambiandoEstado === curso.id}
+                                                    onChange={(e) => handleSeleccionarEstado(curso, e)}
+                                                >
+                                                    <option value="ACTIVO">Activo</option>
+                                                    <option value="DESACTIVADO">Desactivado</option>
+                                                    <option value="CERRADO">Cerrado</option>
+                                                </select>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -562,6 +598,35 @@ export default function Cursos() {
                 </div>
             )}
 
+            {/* ─── MODAL DE CONFIRMACIÓN: CERRAR CURSO ───────────────── */}
+            {confirmCierre && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+                    <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <Lock className="w-5 h-5 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Cerrar Curso</h3>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">
+                            Está a punto de cerrar el curso "<strong>{confirmCierre.nombre}</strong>". Esta acción es <strong>permanente</strong>:
+                        </p>
+                        <ul className="text-sm text-gray-600 mb-4 space-y-1.5 list-disc list-inside bg-red-50 border border-red-100 rounded-lg p-3">
+                            <li>El curso ya no podrá reabrirse ni volver a "Activo" o "Desactivado".</li>
+                            <li>No se podrá editar ningún dato del curso (nombre, precio, fechas, imagen, etc.).</li>
+                            <li>Ocurre lo mismo automáticamente cuando la fecha de fin del curso ya pasó.</li>
+                        </ul>
+                        <div className="flex justify-end gap-3">
+                            <Button variant="secondary" onClick={() => setConfirmCierre(null)} disabled={cambiandoEstado === confirmCierre.id}>
+                                Cancelar
+                            </Button>
+                            <Button variant="danger" onClick={handleConfirmarCierre} isLoading={cambiandoEstado === confirmCierre.id}>
+                                Sí, cerrar curso
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

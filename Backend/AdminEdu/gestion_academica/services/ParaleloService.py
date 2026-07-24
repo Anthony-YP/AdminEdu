@@ -13,6 +13,7 @@ from gestion_academica.models.persona.Persona import (
 )
 
 from gestion_academica.models.academia.estado_paralelo import EstadoParalelo
+from gestion_academica.models.academia.estado_curso import EstadoCurso
 from gestion_academica.models.notificaciones.Notificacion import Notificacion
 
 
@@ -264,6 +265,12 @@ class ParaleloService:
         if nuevo_estado not in EstadoParalelo.values:
             raise ValidationError(
                 "El estado indicado no es válido."
+            )
+
+        if paralelo.curso.estado == EstadoCurso.CERRADO:
+            raise ValidationError(
+                "El curso de este paralelo está cerrado; el paralelo "
+                "quedó desactivado permanentemente."
             )
 
         paralelo.estado = nuevo_estado
