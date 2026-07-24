@@ -46,6 +46,10 @@ export default function Cursos() {
     // Cambio de estado (baja lógica: Activo/Desactivado/Cerrado)
     const [cambiandoEstado, setCambiandoEstado] = useState(null);
 
+    // IDs de curso cuya imagen falló al cargar (archivo borrado/roto en el
+    // servidor) — se usa para caer al placeholder en vez de un ícono roto.
+    const [imagenesConError, setImagenesConError] = useState({});
+
     // Cargar cursos y academias al montar
     useEffect(() => {
         cargarCursos();
@@ -367,8 +371,13 @@ export default function Cursos() {
                         return (
                             <div key={curso.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
                                 <div className="h-36 bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    {curso.imagen ? (
-                                        <img src={curso.imagen} alt={curso.nombre} className="w-full h-full object-cover" />
+                                    {curso.imagen && !imagenesConError[curso.id] ? (
+                                        <img
+                                            src={curso.imagen}
+                                            alt={curso.nombre}
+                                            className="w-full h-full object-cover"
+                                            onError={() => setImagenesConError((prev) => ({ ...prev, [curso.id]: true }))}
+                                        />
                                     ) : (
                                         <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" />

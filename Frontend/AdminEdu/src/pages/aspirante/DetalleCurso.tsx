@@ -17,6 +17,7 @@ export default function DetalleCurso() {
     const [monto, setMonto] = useState("");
     const [numeroRef, setNumeroRef] = useState("");
     const [comentario, setComentario] = useState("");
+    const [imagenConError, setImagenConError] = useState(false);
 
     useEffect(() => {
         async function load() {
@@ -163,9 +164,14 @@ export default function DetalleCurso() {
 
             {/* Course Info */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                {curso?.imagen && (
+                {curso?.imagen && !imagenConError && (
                     <div className="w-full h-56 overflow-hidden">
-                        <img src={curso.imagen} alt={curso.nombre} className="w-full h-full object-cover" />
+                        <img
+                            src={curso.imagen}
+                            alt={curso.nombre}
+                            className="w-full h-full object-cover"
+                            onError={() => setImagenConError(true)}
+                        />
                     </div>
                 )}
                 <div className="p-8">

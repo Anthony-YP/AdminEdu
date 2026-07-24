@@ -6,6 +6,7 @@ export default function EstudianteCursosDisponibles() {
     const [cursos, setCursos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [busqueda, setBusqueda] = useState("");
+    const [imagenesConError, setImagenesConError] = useState({});
 
     useEffect(() => {
         async function load() {
@@ -61,9 +62,14 @@ export default function EstudianteCursosDisponibles() {
                             to={`/estudiante-cursos/${curso.id}`}
                             className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-300 transition-all duration-200 group"
                         >
-                            {curso.imagen ? (
+                            {curso.imagen && !imagenesConError[curso.id] ? (
                                 <div className="w-full h-40 overflow-hidden">
-                                    <img src={curso.imagen} alt={curso.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                    <img
+                                        src={curso.imagen}
+                                        alt={curso.nombre}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        onError={() => setImagenesConError((prev) => ({ ...prev, [curso.id]: true }))}
+                                    />
                                 </div>
                             ) : (
                                 <div className="w-full h-40 bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
