@@ -47,8 +47,8 @@ export default function EstudianteMatriculas() {
                 <div key={m.id} className="rounded-lg border p-4">
                   <div className="flex justify-between">
                     <div>
-                      <p className="font-semibold">{m.curso || "Curso"}</p>
-                      <p className="text-sm text-gray-500">Paralelo: {m.paralelo_matricula || "—"}</p>
+                      <p className="font-semibold">{m.curso_nombre || "Curso"}</p>
+                      <p className="text-sm text-gray-500">Paralelo: {m.paralelo_nombre || "—"}</p>
                     </div>
                     <Badge variant="blue">{m.estado || "Pendiente"}</Badge>
                   </div>

@@ -5,6 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from gestion_academica.models.academia.Academia import Curso, Paralelo
 from gestion_academica.models.persona.Persona import Persona, Estudiante
@@ -13,21 +14,166 @@ from gestion_academica.models.pagos.Pagos import ComprobantePago
 from gestion_academica.models.matricula.Matricula import Matricula
 from gestion_academica.models.matricula.estado_matricula import EstadoMatricula
 
-from gestion_academica.services.CursoService import CursoService
 from gestion_academica.services.MatriculaService import MatriculaService
+from gestion_academica.services.PersonaService import PersonaService
+from gestion_academica.services.RepresentanteService import RepresentanteService
+from gestion_academica.serializers.DireccionSerializer import DireccionSerializer
+from usuarios.models import GRUPO_ESTUDIANTE
+from usuarios.permissions import EsEstudiante
+from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError as DjangoValidationError
 
-from gestion_academica.api.serializers import CursoSerializer
 
+class EstudianteHistorialView(APIView):
+    """
+    RF09: Historial académico del estudiante autenticado — cursos en
+    los que está matriculado (con horario y % de asistencia) y cursos
+    ya completados (con su nota final).
+    """
 
-class AspiranteCursosView(APIView):
-    """Endpoint público: cursos disponibles para aspirantes."""
-
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [EsEstudiante]
 
     def get(self, request):
-        cursos = CursoService.listar_cursos()
-        serializer = CursoSerializer(cursos, many=True, context={"request": request})
-        return Response(serializer.data)
+        user = request.user
+
+        try:
+            persona = Persona.objects.get(usuario=user)
+            estudiante = Estudiante.objects.get(persona_ptr=persona)
+        except (Persona.DoesNotExist, Estudiante.DoesNotExist):
+            return Response([], status=status.HTTP_200_OK)
+
+        matriculas = MatriculaService.listar_matriculas_estudiante(estudiante)
+
+        resultado = []
+        for m in matriculas:
+            paralelo = m.paralelo_matricula
+            curso = paralelo.curso
+            calificacion = getattr(m, "calificacion_final", None)
+
+            resultado.append({
+                "id": m.id,
+                "curso": curso.id,
+                "curso_nombre": curso.nombre,
+                "paralelo": paralelo.nombre,
+                "paralelo_id": paralelo.id,
+                "dias_clase": paralelo.dias_clase,
+                "hora_inicio": paralelo.hora_inicio.isoformat() if paralelo.hora_inicio else None,
+                "hora_fin": paralelo.hora_fin.isoformat() if paralelo.hora_fin else None,
+                "estado": m.estado,
+                "fecha_solicitud": m.fecha_solicitud.isoformat() if m.fecha_solicitud else None,
+                "fecha_aprobacion": m.fecha_aprobacion.isoformat() if m.fecha_aprobacion else None,
+                "porcentaje_asistencia": MatriculaService.calcular_porcentaje_asistencia(m),
+                "nota_final": str(calificacion.nota_final) if calificacion else None,
+                "aprobado": calificacion.aprobado if calificacion else None,
+            })
+
+        return Response(resultado, status=status.HTTP_200_OK)
+
+
+class PerfilCompletadoView(APIView):
+    """
+    RF04: tras registrarse/iniciar sesión con Google, el aspirante
+    completa su perfil con datos personales reales (no fabricados)
+    antes de poder solicitar una matrícula. Si es menor de edad,
+    también debe registrar a su representante legal (RF11).
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        user = request.user
+        grupos = list(user.groups.values_list("name", flat=True))
+
+        if "Aspirante" not in grupos:
+            return Response(
+                {"detail": "No eres un aspirante."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if Persona.objects.filter(usuario=user).exists():
+            return Response(
+                {"detail": "Ya completaste tu perfil anteriormente."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        datos = request.data
+
+        direccion_serializer = DireccionSerializer(data=datos.get("direccion") or {})
+        direccion_serializer.is_valid(raise_exception=True)
+
+        fecha_nacimiento = parse_date(str(datos.get("fecha_nacimiento") or ""))
+
+        if fecha_nacimiento is None:
+            return Response(
+                {"detail": "La fecha de nacimiento es obligatoria y debe tener formato AAAA-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        datos_representante = datos.get("representante_legal")
+
+        if PersonaService.es_menor_edad(fecha_nacimiento) and not datos_representante:
+            return Response(
+                {"detail": "Por ser menor de edad, debe registrar los datos de un representante legal."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            direccion = Direccion.objects.create(**direccion_serializer.validated_data)
+
+            datos_persona = dict(
+                usuario=user,
+                direccion=direccion,
+                tipo_documento=datos.get("tipo_documento", "CEDULA"),
+                numero_identificacion=datos.get("numero_identificacion"),
+                nombres=datos.get("nombres"),
+                apellidos=datos.get("apellidos"),
+                correo=datos.get("correo") or user.email,
+                telefono=datos.get("telefono"),
+                fecha_nacimiento=fecha_nacimiento,
+            )
+
+            representante_legal = None
+
+            if datos_representante:
+                fecha_nacimiento_rep = parse_date(str(datos_representante.get("fecha_nacimiento") or ""))
+
+                if fecha_nacimiento_rep is None:
+                    raise DjangoValidationError(
+                        "La fecha de nacimiento del representante legal "
+                        "es obligatoria y debe tener formato AAAA-MM-DD."
+                    )
+
+                representante_legal = RepresentanteService.crear_representante(
+                    direccion=direccion,
+                    tipo_documento=datos_representante.get("tipo_documento", "CEDULA"),
+                    numero_identificacion=datos_representante.get("numero_identificacion"),
+                    nombres=datos_representante.get("nombres"),
+                    apellidos=datos_representante.get("apellidos"),
+                    correo=datos_representante.get("correo"),
+                    telefono=datos_representante.get("telefono"),
+                    fecha_nacimiento=fecha_nacimiento_rep,
+                )
+
+            estudiante = Estudiante(
+                representante_legal=representante_legal,
+                **datos_persona,
+            )
+            estudiante.save()
+
+        except DjangoValidationError as e:
+            return Response(
+                {"detail": " ".join(e.messages) if hasattr(e, "messages") else str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        estudiante_group, _ = Group.objects.get_or_create(name=GRUPO_ESTUDIANTE)
+        user.groups.add(estudiante_group)
+
+        return Response(
+            {"detail": "Perfil completado correctamente.", "estudiante_id": estudiante.pk},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class AspirantePerfilView(APIView):
@@ -61,6 +207,7 @@ class AspirantePerfilView(APIView):
             "last_name": user.last_name,
             "grupos": grupos,
             "photo": photo,
+            "perfil_completo": Persona.objects.filter(usuario=user).exists(),
         })
 
 
@@ -148,10 +295,17 @@ class AspiranteMatriculaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        allowed_types = ["application/pdf", "image/png"]
-        if hasattr(comprobante, 'content_type') and comprobante.content_type not in allowed_types:
+        nombre_archivo = getattr(comprobante, "name", "") or ""
+        if not nombre_archivo.lower().endswith((".pdf", ".png")):
             return Response(
-                {"detail": "El comprobante debe ser de tipo PDF o PNG."},
+                {"detail": "El comprobante debe ser un archivo PDF o PNG."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tamano_maximo = 5 * 1024 * 1024  # 5 MB
+        if getattr(comprobante, "size", 0) > tamano_maximo:
+            return Response(
+                {"detail": "El comprobante no puede superar los 5 MB."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -167,7 +321,11 @@ class AspiranteMatriculaView(APIView):
             persona = Persona.objects.get(usuario=user)
             estudiante = Estudiante.objects.get(persona_ptr=persona)
         except Persona.DoesNotExist:
-            estudiante = self._crear_estudiante_desde_google(user)
+            return Response(
+                {"detail": "Debe completar su perfil antes de solicitar una matrícula.",
+                 "codigo": "PERFIL_INCOMPLETO"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except Estudiante.DoesNotExist:
             persona = Persona.objects.get(usuario=user)
             estudiante = Estudiante(
@@ -216,50 +374,3 @@ class AspiranteMatriculaView(APIView):
             "paralelo_nombre": paralelo.nombre,
         }, status=status.HTTP_201_CREATED)
 
-    def _obtener_o_crear_direccion(self):
-        direccion, _ = Direccion.objects.get_or_create(
-            ciudad="Por definir",
-            defaults={
-                "calle_principal": "Por definir",
-                "calle_secundaria": "Por definir",
-                "numero_casa": "S/N",
-                "referencia": "Dirección pendiente de actualización",
-            }
-        )
-        return direccion
-
-    def _crear_estudiante_desde_google(self, user):
-        from gestion_academica.services.PersonaService import PersonaService
-
-        direccion = self._obtener_o_crear_direccion()
-
-        num_id = f"{user.id:010d}"[-10:]
-        telefono = f"09{user.id:08d}"[-10:]
-
-        persona = Persona.objects.create(
-            usuario=user,
-            direccion=direccion,
-            tipo_documento="CEDULA",
-            numero_identificacion=num_id,
-            nombres=user.first_name or "Sin Nombre",
-            apellidos=user.last_name or "Sin Apellido",
-            correo=user.email,
-            telefono=telefono,
-            fecha_nacimiento=timezone.now().date(),
-        )
-
-        estudiante = Estudiante(
-            usuario=user,
-            direccion=direccion,
-            tipo_documento="CEDULA",
-            numero_identificacion=num_id,
-            nombres=persona.nombres,
-            apellidos=persona.apellidos,
-            correo=persona.correo,
-            telefono=telefono,
-            fecha_nacimiento=persona.fecha_nacimiento,
-        )
-        estudiante.pk = persona.pk
-        estudiante.save()
-
-        return estudiante

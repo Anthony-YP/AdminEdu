@@ -38,6 +38,10 @@ api.interceptors.response.use(
                 );
 
                 localStorage.setItem("access", response.data.access);
+                if (response.data.refresh) {
+                    // El backend rota el refresh token en cada uso (ROTATE_REFRESH_TOKENS)
+                    localStorage.setItem("refresh", response.data.refresh);
+                }
                 originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
                 return api(originalRequest);
             } catch (refreshError) {

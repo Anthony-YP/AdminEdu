@@ -1,5 +1,27 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
+from usuarios.models import GRUPO_ADMINISTRADOR
+
+
+def pertenece_a(user, grupos=None):
+    """
+    True si el usuario está autenticado y es superusuario, pertenece al
+    grupo 'Administrador' (bypass equivalente a superusuario), o pertenece
+    a alguno de los `grupos` indicados.
+
+    Si `grupos` es None o vacío, cualquier usuario autenticado cumple
+    (útil para permisos que solo exigen estar logueado más el bypass admin).
+    """
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if user.groups.filter(name=GRUPO_ADMINISTRADOR).exists():
+        return True
+    if not grupos:
+        return True
+    return user.groups.filter(name__in=grupos).exists()
+
 
 class TieneGrupo(BasePermission):
     """
@@ -11,94 +33,55 @@ class TieneGrupo(BasePermission):
         self.grupos_permitidos = grupos_permitidos or []
 
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if request.user.is_superuser:
-            return True
-        if not self.grupos_permitidos:
-            return True
-        return request.user.groups.filter(
-            name__in=self.grupos_permitidos
-        ).exists()
+        return pertenece_a(request.user, self.grupos_permitidos)
 
 
 class EsDirector(BasePermission):
-    """Solo usuarios en el grupo 'Director'"""
+    """Director o Administrador"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or
-            request.user.groups.filter(name='Director').exists()
-        )
+        return pertenece_a(request.user, ['Director'])
 
 
 class EsSecretaria(BasePermission):
-    """Solo usuarios en el grupo 'Secretaria'"""
+    """Secretaria o Administrador"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or
-            request.user.groups.filter(name='Secretaria').exists()
-        )
+        return pertenece_a(request.user, ['Secretaria'])
 
 
 class EsDocente(BasePermission):
-    """Solo usuarios en el grupo 'Docente'"""
+    """Docente o Administrador"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or
-            request.user.groups.filter(name='Docente').exists()
-        )
+        return pertenece_a(request.user, ['Docente'])
 
 
 class EsEstudiante(BasePermission):
-    """Solo usuarios en el grupo 'Estudiante'"""
+    """Estudiante o Administrador"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or
-            request.user.groups.filter(name='Estudiante').exists()
-        )
+        return pertenece_a(request.user, ['Estudiante'])
 
 
 class EsRepresentante(BasePermission):
-    """Solo usuarios en el grupo 'Representante'"""
+    """Representante o Administrador"""
     def has_permission(self, request, view):
-        return request.user.is_authenticated and (
-            request.user.is_superuser or
-            request.user.groups.filter(name='Representante').exists()
-        )
+        return pertenece_a(request.user, ['Representante'])
 
 
 class EsAdministrativo(BasePermission):
-    """Director o Secretaria (personal administrativo)"""
+    """Director, Secretaria o Administrador (personal administrativo)"""
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if request.user.is_superuser:
-            return True
-        return request.user.groups.filter(
-            name__in=['Director', 'Secretaria']
-        ).exists()
+        return pertenece_a(request.user, ['Director', 'Secretaria'])
 
 
 class EsPersonalInstitucion(BasePermission):
-    """Director, Secretaria o Docente (personal de la institución)"""
+    """Director, Secretaria, Docente o Administrador (personal de la institución)"""
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if request.user.is_superuser:
-            return True
-        return request.user.groups.filter(
-            name__in=['Director', 'Secretaria', 'Docente']
-        ).exists()
+        return pertenece_a(request.user, ['Director', 'Secretaria', 'Docente'])
 
 
 class EsDirectorOSuperuser(BasePermission):
-    """Solo Director o superusuario"""
+    """Solo Director o Administrador/superusuario"""
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
-            return False
-        if request.user.is_superuser:
-            return True
-        return request.user.groups.filter(name='Director').exists()
+        return pertenece_a(request.user, ['Director'])
 
 
 class PermisoPorAccion(BasePermission):
@@ -113,9 +96,9 @@ class PermisoPorAccion(BasePermission):
         }
     """
     def has_permission(self, request, view):
-        if not request.user.is_authenticated:
+        if not pertenece_a(request.user):
             return False
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.groups.filter(name=GRUPO_ADMINISTRADOR).exists():
             return True
 
         # Obtener mapa de permisos por acción desde el ViewSet

@@ -123,6 +123,9 @@ class Estudiante(Persona):
         blank=True
     )
 
+    motivo_baja = models.TextField(blank=True, default="")
+    fecha_baja = models.DateField(null=True, blank=True)
+
     def clean(self):
         super().clean()
         from gestion_academica.services.EstudianteService import EstudianteService

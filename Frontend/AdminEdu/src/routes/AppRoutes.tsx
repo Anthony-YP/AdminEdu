@@ -10,10 +10,14 @@ import AspiranteLayout from "../components/aspirante/Layout/AspiranteLayout";
 import LandingPage from "../pages/landing/LandingPage";
 import Login from "../pages/Login";
 import OAuthCallback from "../pages/auth/OAuthCallback";
+import RecuperarContrasena from "../pages/auth/RecuperarContrasena";
+import RestablecerContrasena from "../pages/auth/RestablecerContrasena";
 import Forbidden from "../pages/Forbidden";
 
 // Institutional — shared dashboard
 import Dashboard from "../pages/Dashboard";
+import AdminDashboard from "../pages/AdminDashboard";
+import MiPerfil from "../pages/MiPerfil";
 
 // Director
 import Academias from "../pages/Academias";
@@ -21,6 +25,18 @@ import Cursos from "../pages/Cursos";
 import Paralelos from "../pages/Paralelos";
 import Usuarios from "../pages/Usuarios";
 import Personas from "../pages/Personas";
+import GestionPersonal from "../pages/director/GestionPersonal";
+import GestionEstudiantes from "../pages/director/GestionEstudiantes";
+
+// Secretaria
+import MatriculasPendientes from "../pages/secretaria/MatriculasPendientes";
+import MatriculaManual from "../pages/secretaria/MatriculaManual";
+import EnviarNotificacion from "../pages/secretaria/EnviarNotificacion";
+
+// Docente
+import MisParalelos from "../pages/docente/MisParalelos";
+import RegistrarAsistencia from "../pages/docente/RegistrarAsistencia";
+import RegistrarCalificaciones from "../pages/docente/RegistrarCalificaciones";
 
 // Estudiante
 import EstudianteDashboard from "../pages/EstudianteDashboard";
@@ -28,9 +44,12 @@ import EstudiantePerfil from "../pages/EstudiantePerfil";
 import EstudianteMatriculas from "../pages/EstudianteMatriculas";
 import EstudianteHistorial from "../pages/EstudianteHistorial";
 import EstudianteNotificaciones from "../pages/EstudianteNotificaciones";
+import EstudianteCursosDisponibles from "../pages/EstudianteCursosDisponibles";
+import EstudianteDetalleCurso from "../pages/EstudianteDetalleCurso";
 
 // Aspirante
 import DashboardAspirante from "../pages/aspirante/DashboardAspirante";
+import CompletarPerfil from "../pages/aspirante/CompletarPerfil";
 import CursosDisponibles from "../pages/aspirante/CursosDisponibles";
 import DetalleCurso from "../pages/aspirante/DetalleCurso";
 import SolicitudesPage from "../pages/aspirante/SolicitudesPage";
@@ -41,7 +60,7 @@ import Pagos from "../pages/aspirante/Pagos";
 import NotificacionesAspirante from "../pages/aspirante/Notificaciones";
 import PerfilAspirante from "../pages/aspirante/Perfil";
 
-const ALL_INSTITUTIONAL = ["Director", "Secretaria", "Docente", "Estudiante", "Representante"];
+const ALL_INSTITUTIONAL = ["Director", "Secretaria", "Docente", "Estudiante", "Representante", "Administrador"];
 
 export default function AppRoutes() {
     return (
@@ -52,6 +71,8 @@ export default function AppRoutes() {
             <Route element={<PublicRoute />}>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
+                <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
             </Route>
 
             <Route path="/oauth-callback" element={<OAuthCallback />} />
@@ -65,6 +86,8 @@ export default function AppRoutes() {
                 <Route element={<MainLayout />}>
                     {/* Shared dashboard for Director, Secretaria, Docente, Representante */}
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/mi-perfil" element={<MiPerfil />} />
 
                     {/* Director — CRUD completo */}
                     <Route path="/academias" element={<Academias />} />
@@ -72,6 +95,18 @@ export default function AppRoutes() {
                     <Route path="/paralelos" element={<Paralelos />} />
                     <Route path="/usuarios" element={<Usuarios />} />
                     <Route path="/personas" element={<Personas />} />
+                    <Route path="/director/personal" element={<GestionPersonal />} />
+                    <Route path="/director/estudiantes" element={<GestionEstudiantes />} />
+
+                    {/* Secretaria */}
+                    <Route path="/secretaria/matriculas-pendientes" element={<MatriculasPendientes />} />
+                    <Route path="/secretaria/matricula-manual" element={<MatriculaManual />} />
+                    <Route path="/secretaria/notificar" element={<EnviarNotificacion />} />
+
+                    {/* Docente */}
+                    <Route path="/docente/mis-paralelos" element={<MisParalelos />} />
+                    <Route path="/docente/asistencia" element={<RegistrarAsistencia />} />
+                    <Route path="/docente/calificaciones" element={<RegistrarCalificaciones />} />
 
                     {/* Estudiante — portal propio */}
                     <Route path="/estudiante-dashboard" element={<EstudianteDashboard />} />
@@ -79,6 +114,8 @@ export default function AppRoutes() {
                     <Route path="/estudiante-matriculas" element={<EstudianteMatriculas />} />
                     <Route path="/estudiante-historial" element={<EstudianteHistorial />} />
                     <Route path="/estudiante-notificaciones" element={<EstudianteNotificaciones />} />
+                    <Route path="/estudiante-cursos" element={<EstudianteCursosDisponibles />} />
+                    <Route path="/estudiante-cursos/:id" element={<EstudianteDetalleCurso />} />
                 </Route>
             </Route>
 
@@ -88,6 +125,7 @@ export default function AppRoutes() {
             <Route element={<ProtectedRoute roles={["Aspirante"]} />}>
                 <Route element={<AspiranteLayout />}>
                     <Route path="/aspirante" element={<DashboardAspirante />} />
+                    <Route path="/aspirante/completar-perfil" element={<CompletarPerfil />} />
                     <Route path="/aspirante/cursos" element={<CursosDisponibles />} />
                     <Route path="/aspirante/cursos/:id" element={<DetalleCurso />} />
                     <Route path="/aspirante/solicitudes" element={<SolicitudesPage />} />

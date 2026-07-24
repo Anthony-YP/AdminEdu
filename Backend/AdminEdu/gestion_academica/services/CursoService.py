@@ -3,11 +3,13 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from gestion_academica.models.academia.Academia import (
     Academia,
     Curso,
 )
+from gestion_academica.models.academia.estado_curso import EstadoCurso
 
 
 class CursoService:
@@ -166,21 +168,64 @@ class CursoService:
         return curso
 
     @staticmethod
+    def cerrar_cursos_vencidos():
+        """
+        RF20:
+        Cierra automáticamente (de forma perezosa, al consultar)
+        cualquier curso cuya fecha de fin ya pasó y que todavía
+        no esté marcado como CERRADO.
+        """
+
+        Curso.objects.filter(
+            fecha_fin__lt=timezone.now().date()
+        ).exclude(
+            estado=EstadoCurso.CERRADO
+        ).update(
+            estado=EstadoCurso.CERRADO
+        )
+
+    @staticmethod
     def listar_cursos():
         """
         Lista todos los cursos registrados.
         """
 
+        CursoService.cerrar_cursos_vencidos()
+
         return Curso.objects.all().order_by("nombre")
+
+    @staticmethod
+    def cambiar_estado(curso: Curso, nuevo_estado: str) -> Curso:
+        """
+        RF18/RF21:
+        Cambia el estado de un curso (ACTIVO, DESACTIVADO, CERRADO).
+        """
+
+        if curso is None:
+            raise ValidationError(
+                "El curso no existe."
+            )
+
+        if nuevo_estado not in EstadoCurso.values:
+            raise ValidationError(
+                "El estado indicado no es válido."
+            )
+
+        curso.estado = nuevo_estado
+        curso.save(update_fields=["estado"])
+
+        return curso
 
     @staticmethod
     def eliminar_curso(curso: Curso):
         """
-        Elimina un curso aplicando las reglas de negocio.
+        Da de baja lógica a un curso (lo desactiva) en vez de
+        borrarlo físicamente, para preservar el historial de
+        matrículas, asistencia y calificaciones asociado.
         """
         if curso is None:
             raise ValidationError(
                 "El curso no existe."
             )
 
-        curso.delete()
+        return CursoService.cambiar_estado(curso, EstadoCurso.DESACTIVADO)

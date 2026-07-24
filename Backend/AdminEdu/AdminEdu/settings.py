@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'gestion_academica',
     'usuarios',
     'corsheaders',
@@ -150,13 +151,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "EXCEPTION_HANDLER": "AdminEdu.exception_handlers.custom_exception_handler",
 }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
 }
 
@@ -206,4 +208,18 @@ ACCOUNT_ADAPTER = 'usuarios.adapters.AdminEduAccountAdapter'
 FRONTEND_URL = config(
     "FRONTEND_URL",
     default="http://localhost:5173"
+)
+
+# Envío de correo (recuperación de contraseña, RF02).
+# Backend de consola por defecto: imprime el correo en la salida del
+# servidor en vez de enviarlo realmente. Para producción, configurar
+# EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend y las
+# variables EMAIL_HOST/EMAIL_HOST_USER/EMAIL_HOST_PASSWORD/etc. en el .env.
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL",
+    default="no-reply@adminedu.local",
 )

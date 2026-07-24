@@ -1,6 +1,6 @@
+import { useMemo } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import {
     Building2,
@@ -9,43 +9,44 @@ import {
     UserCog,
     CalendarDays,
     GraduationCap,
-    DollarSign,
-    Clock,
     ClipboardCheck,
     Award,
     LayoutDashboard,
-    FileText,
     Bell
 } from "lucide-react";
 
-// Mapeo de módulos reales que tienen endpoints en el API
-const rutasDisponibles = ["/academias", "/cursos", "/paralelos", "/usuarios", "/personas", "/estudiante-dashboard", "/estudiante-perfil", "/estudiante-matriculas", "/estudiante-historial", "/estudiante-notificaciones"];
+// Orden de prioridad para deduplicar módulos cuando un usuario tiene varios roles
+// (ej. un módulo listado tanto en Director como en Secretaria solo se muestra una vez).
+const ORDEN_ROLES = ["Director", "Secretaria", "Docente", "Estudiante", "Representante"];
 
-// Configuración de módulos con iconos de Lucide
+// Configuración de módulos con iconos de Lucide, por rol
 const cardsPorRol = {
     Director: [
         { titulo: "Academias", descripcion: "Gestionar academias y sedes", ruta: "/academias", icon: Building2 },
         { titulo: "Cursos", descripcion: "Crear, editar y eliminar cursos", ruta: "/cursos", icon: BookOpen },
         { titulo: "Paralelos", descripcion: "Gestionar paralelos y horarios", ruta: "/paralelos", icon: CalendarDays },
-        { titulo: "Usuarios", descripcion: "Visualización de personal", ruta: "/usuarios", icon: Users },
+        { titulo: "Usuarios", descripcion: "Gestionar cuentas y roles", ruta: "/usuarios", icon: Users },
+        { titulo: "Personal", descripcion: "Directores, secretarias y docentes", ruta: "/director/personal", icon: UserCog },
+        { titulo: "Estudiantes", descripcion: "Gestionar y dar de baja estudiantes", ruta: "/director/estudiantes", icon: GraduationCap },
     ],
     Secretaria: [
         { titulo: "Cursos", descripcion: "Ver cursos disponibles", ruta: "/cursos", icon: BookOpen },
         { titulo: "Paralelos", descripcion: "Ver horarios y secciones", ruta: "/paralelos", icon: CalendarDays },
-        { titulo: "Matrículas", descripcion: "Registrar matrículas", ruta: "#", icon: ClipboardCheck },
-        { titulo: "Estudiantes", descripcion: "Gestionar estudiantes", ruta: "#", icon: GraduationCap },
-        { titulo: "Pagos", descripcion: "Comprobantes", ruta: "#", icon: DollarSign },
+        { titulo: "Matrículas Pendientes", descripcion: "Aprobar, rechazar o cancelar solicitudes", ruta: "/secretaria/matriculas-pendientes", icon: ClipboardCheck },
+        { titulo: "Matrícula Manual", descripcion: "Registrar matrícula en casos excepcionales", ruta: "/secretaria/matricula-manual", icon: GraduationCap },
+        { titulo: "Notificar", descripcion: "Enviar notificaciones a estudiantes o docentes", ruta: "/secretaria/notificar", icon: Bell },
     ],
     Docente: [
-        { titulo: "Cursos Asignados", descripcion: "Ver mis cursos y paralelos", ruta: "/cursos", icon: BookOpen },
-        { titulo: "Asistencia", descripcion: "Registrar asistencia", ruta: "#", icon: ClipboardCheck },
-        { titulo: "Calificaciones", descripcion: "Ingresar calificaciones", ruta: "#", icon: Award },
+        { titulo: "Mis Paralelos", descripcion: "Ver mis cursos y paralelos asignados", ruta: "/docente/mis-paralelos", icon: BookOpen },
+        { titulo: "Asistencia", descripcion: "Registrar asistencia", ruta: "/docente/asistencia", icon: ClipboardCheck },
+        { titulo: "Calificaciones", descripcion: "Ingresar calificaciones", ruta: "/docente/calificaciones", icon: Award },
     ],
     Estudiante: [
         { titulo: "Inicio", descripcion: "Resumen del estudiante", ruta: "/estudiante-dashboard", icon: LayoutDashboard },
+        { titulo: "Cursos Disponibles", descripcion: "Explorar y solicitar nuevas matrículas", ruta: "/estudiante-cursos", icon: BookOpen },
         { titulo: "Mi Perfil", descripcion: "Ver y editar datos personales", ruta: "/estudiante-perfil", icon: UserCog },
         { titulo: "Mis Matrículas", descripcion: "Consultar estado de matrículas", ruta: "/estudiante-matriculas", icon: ClipboardCheck },
-        { titulo: "Historial", descripcion: "Ver cursos y notas", ruta: "/estudiante-historial", icon: Award },
+        { titulo: "Historial", descripcion: "Ver cursos, asistencia y notas", ruta: "/estudiante-historial", icon: Award },
         { titulo: "Notificaciones", descripcion: "Leer alertas y mensajes", ruta: "/estudiante-notificaciones", icon: Bell },
     ],
     Representante: [
@@ -57,6 +58,31 @@ const cardsPorRol = {
 export default function Dashboard() {
     const { usuario } = useAuth();
     const navigate = useNavigate();
+
+    // Roles del usuario que efectivamente tienen módulos definidos. Un
+    // Administrador ve la unión de todos los módulos existentes, igual que
+    // el resto de las pantallas (bypass ya aplicado en hasRole/hasGroup).
+    const rolesConModulos = useMemo(() => {
+        if (!usuario) return [];
+        if (usuario.groups.includes("Administrador")) return ORDEN_ROLES;
+        return ORDEN_ROLES.filter((rol) => usuario.groups.includes(rol));
+    }, [usuario]);
+
+    // Módulos combinados de todos los roles del usuario, sin duplicar una
+    // misma ruta cuando aparece en más de un rol (ej. "Cursos" en Director y Secretaria).
+    const cards = useMemo(() => {
+        const vistos = new Set();
+        const resultado = [];
+        for (const rol of rolesConModulos) {
+            for (const modulo of cardsPorRol[rol] || []) {
+                const clave = modulo.ruta === "#" ? `${rol}-${modulo.titulo}` : modulo.ruta;
+                if (vistos.has(clave)) continue;
+                vistos.add(clave);
+                resultado.push(modulo);
+            }
+        }
+        return resultado;
+    }, [rolesConModulos]);
 
     // Si el usuario no está cargado, mostramos un skeleton elegante
     if (!usuario) {
@@ -71,7 +97,6 @@ export default function Dashboard() {
     }
 
     const grupoPrincipal = usuario.groups[0];
-    const cards = cardsPorRol[grupoPrincipal] || [];
 
     // Extraer iniciales para el avatar
     const getInitials = (username) => {
@@ -80,7 +105,6 @@ export default function Dashboard() {
     };
 
     return (
-       
         <div className="space-y-8 animate-fadeIn">
             {/* Header mejorado con efecto glass y gradiente */}
             <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 shadow-2xl">
@@ -108,63 +132,37 @@ export default function Dashboard() {
                                 <p className="text-xs text-blue-200">{usuario?.email}</p>
                             </div>
                         </div>
-                        <Badge variant="outline" className="border-white/30 text-white bg-white/10 px-3 py-1">
-                            {grupoPrincipal}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1.5 max-w-[10rem]">
+                            {usuario.groups.map((rol) => (
+                                <Badge key={rol} variant="outline" className="border-white/30 text-white bg-white/10 px-3 py-1">
+                                    {rol}
+                                </Badge>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Resumen rápido - estadísticas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                        <BookOpen className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-gray-800">{cards.length}</p>
-                        <p className="text-sm text-gray-500">Módulos disponibles</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                        <Users className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-gray-800">{usuario?.groups?.length || 0}</p>
-                        <p className="text-sm text-gray-500">Roles asignados</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                        <FileText className="h-6 w-6" />
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-                    <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                        <Clock className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-gray-800">Online</p>
-                        <p className="text-sm text-gray-500">Estado de sesión</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Módulos con diseño mejorado */}
+            {/* Módulos disponibles */}
             <div>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <span className="bg-gradient-to-r from-blue-600 to-indigo-600 w-1.5 h-7 rounded-full inline-block"></span>
-                        Módulos disponibles
-                    </h2>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 w-1.5 h-7 rounded-full inline-block"></span>
+                            Módulos disponibles
+                        </h2>
+                        {rolesConModulos.length > 1 && (
+                            <p className="text-sm text-gray-500 mt-1 ml-3.5">
+                                Según tus roles: {rolesConModulos.join(", ")}
+                            </p>
+                        )}
+                    </div>
                     <Badge variant="gray" className="text-sm px-4 py-1.5">
                         {cards.length} módulos
                     </Badge>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {cards.map((card, index) => {
-                        const isAvailable = rutasDisponibles.includes(card.ruta);
                         const isDisabled = card.ruta === "#";
                         const IconComponent = card.icon;
 
@@ -196,9 +194,9 @@ export default function Dashboard() {
                     `}>
                                             <IconComponent className="w-7 h-7" />
                                         </div>
-                                        {!isAvailable && (
+                                        {isDisabled && (
                                             <Badge variant="gray" className="text-[10px] uppercase tracking-wider font-semibold px-3 py-1">
-                                                Admin
+                                                Próximamente
                                             </Badge>
                                         )}
                                     </div>
@@ -220,41 +218,6 @@ export default function Dashboard() {
                     })}
                 </div>
             </div>
-
-            {/* Información de usuario - más detallada y visual */}
-            <Card className="border border-gray-100 shadow-sm overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-100">
-                    <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-md ring-2 ring-white">
-                            {getInitials(usuario?.username)}
-                        </div>
-                        <div>
-                            <CardTitle className="text-xl font-bold text-gray-800">Información de sesión</CardTitle>
-                            <p className="text-sm text-gray-500">Detalles de tu cuenta y permisos</p>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Usuario</p>
-                            <p className="text-base font-semibold text-gray-900">{usuario?.username}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Correo electrónico</p>
-                            <p className="text-base font-semibold text-gray-900">{usuario?.email}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Rol principal</p>
-                            <Badge variant="blue" className="px-4 py-1.5 text-sm">{grupoPrincipal}</Badge>
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Permisos</p>
-                            <p className="text-base font-semibold text-gray-900">{usuario?.permisos?.length || 0} asignados</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }

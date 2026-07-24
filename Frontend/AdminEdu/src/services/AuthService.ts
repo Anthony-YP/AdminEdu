@@ -7,8 +7,42 @@ class AuthService {
         return response.data;
     }
 
+    async logout(refresh: string | null, access: string | null): Promise<void> {
+        if (!refresh) return;
+        try {
+            // El access token ya fue removido de localStorage por el
+            // llamador, así que se envía explícitamente en el header
+            // en vez de depender del interceptor de axios.
+            await api.post(
+                "/logout",
+                { refresh },
+                access ? { headers: { Authorization: `Bearer ${access}` } } : undefined
+            );
+        } catch {
+            // Si el token ya expiró o el servidor no responde, igual
+            // limpiamos la sesión localmente (ver AuthContext.logout).
+        }
+    }
+
     async me(): Promise<Usuario> {
         const response = await api.get<Usuario>("/me/");
+        return response.data;
+    }
+
+    async requestPasswordReset(numeroIdentificacion: string, correo: string): Promise<{ detail: string }> {
+        const response = await api.post("/password-reset/request/", {
+            numero_identificacion: numeroIdentificacion,
+            correo,
+        });
+        return response.data;
+    }
+
+    async confirmPasswordReset(uid: string, token: string, nuevaPassword: string): Promise<{ detail: string }> {
+        const response = await api.post("/password-reset/confirm/", {
+            uid,
+            token,
+            nueva_password: nuevaPassword,
+        });
         return response.data;
     }
 

@@ -12,6 +12,28 @@ from gestion_academica.models.persona.Persona import (
     Docente,
 )
 
+from gestion_academica.models.academia.estado_paralelo import EstadoParalelo
+from gestion_academica.models.notificaciones.Notificacion import Notificacion
+
+
+def _notificar_docente_asignado(paralelo):
+    """
+    RF28: notifica al docente cuando se le asigna un paralelo.
+    Si el docente no tiene una cuenta de usuario asociada, no hay
+    a quién notificar y se omite en silencio.
+    """
+
+    if paralelo.docente is None or paralelo.docente.usuario is None:
+        return
+
+    Notificacion.objects.create(
+        usuario=paralelo.docente.usuario,
+        mensaje=(
+            f"Se le ha asignado el paralelo {paralelo.nombre} "
+            f"del curso {paralelo.curso.nombre}."
+        ),
+    )
+
 
 class ParaleloService:
     """
@@ -73,19 +95,33 @@ class ParaleloService:
         )
 
     @staticmethod
+    def validar_dias_clase(dias_clase):
+        """
+        Los días de clase deben ser una lista no vacía
+        (ej. ["Lunes", "Miércoles"]).
+        """
+
+        if not dias_clase or not isinstance(dias_clase, list):
+            raise ValidationError(
+                "Los días de clase son obligatorios y deben "
+                "ser una lista de días."
+            )
+
+    @staticmethod
     @transaction.atomic
     def crear_paralelo(
         curso: Curso,
         docente: Docente,
         nombre: str,
-        dias_clase: str,
+        dias_clase,
         hora_inicio: time,
         hora_fin: time,
         cupo_max: int
     ) -> Paralelo:
         """
         Crea un paralelo aplicando las reglas
-        de negocio.
+        de negocio. El docente es opcional: un paralelo
+        puede crearse sin asignar docente todavía.
         """
 
         if curso is None:
@@ -93,20 +129,12 @@ class ParaleloService:
                 "El curso es obligatorio."
             )
 
-        if docente is None:
-            raise ValidationError(
-                "El docente es obligatorio."
-            )
-
         if not nombre or not nombre.strip():
             raise ValidationError(
                 "El nombre del paralelo es obligatorio."
             )
 
-        if not dias_clase or not dias_clase.strip():
-            raise ValidationError(
-                "Los días de clase son obligatorios."
-            )
+        ParaleloService.validar_dias_clase(dias_clase)
 
         ParaleloService.validar_horario(
             hora_inicio,
@@ -118,7 +146,6 @@ class ParaleloService:
         )
 
         nombre = nombre.strip()
-        dias_clase = dias_clase.strip()
 
         paralelo_existente = Paralelo.objects.filter(
             curso=curso,
@@ -131,7 +158,7 @@ class ParaleloService:
                 "en este curso."
             )
 
-        return Paralelo.objects.create(
+        paralelo = Paralelo.objects.create(
             curso=curso,
             docente=docente,
             nombre=nombre,
@@ -141,6 +168,11 @@ class ParaleloService:
             cupo_max=cupo_max
         )
 
+        if docente is not None:
+            _notificar_docente_asignado(paralelo)
+
+        return paralelo
+
     @staticmethod
     @transaction.atomic
     def actualizar_paralelo(
@@ -148,14 +180,14 @@ class ParaleloService:
         curso: Curso,
         docente: Docente,
         nombre: str,
-        dias_clase: str,
+        dias_clase,
         hora_inicio: time,
         hora_fin: time,
         cupo_max: int
     ) -> Paralelo:
         """
-        Actualiza un paralelo aplicando
-        las reglas de negocio.
+        Actualiza los datos operativos de un paralelo (no su estado,
+        que se gestiona con `cambiar_estado`).
         """
 
         if paralelo is None:
@@ -168,20 +200,12 @@ class ParaleloService:
                 "El curso es obligatorio."
             )
 
-        if docente is None:
-            raise ValidationError(
-                "El docente es obligatorio."
-            )
-
         if not nombre or not nombre.strip():
             raise ValidationError(
                 "El nombre del paralelo es obligatorio."
             )
 
-        if not dias_clase or not dias_clase.strip():
-            raise ValidationError(
-                "Los días de clase son obligatorios."
-            )
+        ParaleloService.validar_dias_clase(dias_clase)
 
         ParaleloService.validar_horario(
             hora_inicio,
@@ -193,7 +217,6 @@ class ParaleloService:
         )
 
         nombre = nombre.strip()
-        dias_clase = dias_clase.strip()
 
         paralelo_existente = Paralelo.objects.filter(
             curso=curso,
@@ -208,6 +231,8 @@ class ParaleloService:
                 "en este curso."
             )
 
+        docente_anterior_id = paralelo.docente_id
+
         paralelo.curso = curso
         paralelo.docente = docente
         paralelo.nombre = nombre
@@ -218,6 +243,32 @@ class ParaleloService:
 
         paralelo.save()
 
+        if docente is not None and docente.pk != docente_anterior_id:
+            _notificar_docente_asignado(paralelo)
+
+        return paralelo
+
+    @staticmethod
+    @transaction.atomic
+    def cambiar_estado(paralelo: Paralelo, nuevo_estado: str) -> Paralelo:
+        """
+        RF19/RF22:
+        Cambia el estado de un paralelo (ACTIVO, DESACTIVADO).
+        """
+
+        if paralelo is None:
+            raise ValidationError(
+                "El paralelo no existe."
+            )
+
+        if nuevo_estado not in EstadoParalelo.values:
+            raise ValidationError(
+                "El estado indicado no es válido."
+            )
+
+        paralelo.estado = nuevo_estado
+        paralelo.save(update_fields=["estado"])
+
         return paralelo
 
     @staticmethod
@@ -226,7 +277,9 @@ class ParaleloService:
         paralelo: Paralelo
     ):
         """
-        Elimina un paralelo.
+        Da de baja lógica a un paralelo (lo desactiva) en vez de
+        borrarlo físicamente, para preservar el historial de
+        matrículas, asistencia y calificaciones asociado.
         """
 
         if paralelo is None:
@@ -234,4 +287,4 @@ class ParaleloService:
                 "El paralelo no existe."
             )
 
-        paralelo.delete()
+        return ParaleloService.cambiar_estado(paralelo, EstadoParalelo.DESACTIVADO)

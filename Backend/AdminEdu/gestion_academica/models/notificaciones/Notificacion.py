@@ -9,7 +9,7 @@ class Notificacion(models.Model):
         related_name="notificaciones"
     )
     mensaje = models.CharField(max_length=255)
-    fecha = models.DateTimeField()
+    fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = "notificacion"

@@ -7,17 +7,20 @@ export default function DashboardAspirante() {
     const { usuario } = useAuth();
     const [cursos, setCursos] = useState<Curso[]>([]);
     const [solicitudes, setSolicitudes] = useState<SolicitudMatricula[]>([]);
+    const [perfilCompleto, setPerfilCompleto] = useState(true);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
             try {
-                const [c, s] = await Promise.all([
+                const [c, s, perfil] = await Promise.all([
                     AspiranteService.getCursos(),
                     AspiranteService.getSolicitudes(),
+                    AspiranteService.getPerfil(),
                 ]);
                 setCursos(c);
                 setSolicitudes(s);
+                setPerfilCompleto(perfil.perfil_completo);
             } catch {
             } finally {
                 setLoading(false);
@@ -32,6 +35,21 @@ export default function DashboardAspirante() {
 
     return (
         <div className="space-y-8">
+            {!loading && !perfilCompleto && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <p className="font-semibold text-amber-800">Completa tu perfil para poder solicitar matrículas</p>
+                        <p className="text-sm text-amber-600 mt-0.5">Necesitamos tus datos personales reales (no los de tu cuenta de Google).</p>
+                    </div>
+                    <Link
+                        to="/aspirante/completar-perfil"
+                        className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-lg font-medium hover:bg-amber-700 transition-colors text-center"
+                    >
+                        Completar perfil
+                    </Link>
+                </div>
+            )}
+
             {/* Welcome */}
             <div>
                 <h1 className="text-2xl font-bold text-slate-800">

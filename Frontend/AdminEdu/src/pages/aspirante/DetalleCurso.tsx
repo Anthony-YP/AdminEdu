@@ -88,6 +88,10 @@ export default function DetalleCurso() {
             await AspiranteService.solicitarMatricula(formData);
             setExito(true);
         } catch (err: any) {
+            if (err.response?.data?.codigo === "PERFIL_INCOMPLETO") {
+                navigate("/aspirante/completar-perfil");
+                return;
+            }
             setError(err.response?.data?.detail || "Error al enviar la solicitud.");
         } finally {
             setSolicitando(false);

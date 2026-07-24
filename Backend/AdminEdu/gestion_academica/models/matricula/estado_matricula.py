@@ -5,3 +5,4 @@ class EstadoMatricula(models.TextChoices):
     APROBADA = "Aprobada"
     RECHAZADA = "Rechazada"
     FINALIZADA = "Finalizada"
+    CANCELADA = "Cancelada"

@@ -48,7 +48,14 @@ class PersonaCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
 
-        persona = Persona(**attrs)
+        # En una actualización parcial (PATCH), `attrs` solo trae los campos
+        # enviados; se valida sobre una copia del propio registro (o uno
+        # nuevo si es creación) con esos campos aplicados encima, para no
+        # rechazar campos obligatorios que simplemente no cambiaron.
+        persona = self.instance or Persona()
+
+        for campo, valor in attrs.items():
+            setattr(persona, campo, valor)
 
         PersonaService.validar_persona(persona)
 

@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from rest_framework.exceptions import ValidationError
 
@@ -11,8 +12,11 @@ class ComprobantePago(models.Model):
         default=TipoPago.EFECTIVO,
     )
 
-    tipo_archivo = models.FileField(upload_to="comprobantes/")
-    monto = models.DecimalField(max_digits=3,decimal_places=2)
+    tipo_archivo = models.FileField(
+        upload_to="comprobantes/",
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "png"])],
+    )
+    monto = models.DecimalField(max_digits=8,decimal_places=2)
     fecha = models.DateField()
 
     numero_ref = models.CharField(

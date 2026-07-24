@@ -4,8 +4,7 @@ from rest_framework.response import Response
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.AcademiaService import AcademiaService
-from gestion_academica.api.serializers import AcademiaSerializer
-from gestion_academica.serializers.AcademiaSerializer import AcademiaCreateSerializer
+from gestion_academica.serializers.AcademiaSerializer import AcademiaSerializer, AcademiaCreateSerializer
 from usuarios.permissions import EsDirector
 
 class AcademiaViewSet(

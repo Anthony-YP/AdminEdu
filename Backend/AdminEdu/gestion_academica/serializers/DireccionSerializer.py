@@ -9,6 +9,18 @@ class DireccionSerializer(serializers.ModelSerializer):
     la información de una dirección.
     """
 
+    numero_casa = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+
+    referencia = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+
     class Meta:
         model = Direccion
         fields = (

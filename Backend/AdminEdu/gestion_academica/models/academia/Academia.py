@@ -1,5 +1,6 @@
 from ..persona.Persona import Docente
-from .estado import Estado
+from .estado_curso import EstadoCurso
+from .estado_paralelo import EstadoParalelo
 from ..core.Core import Direccion
 from django.db import models
 
@@ -50,7 +51,11 @@ class Curso(models.Model):
 
     fecha_fin = models.DateField()
 
-
+    estado = models.CharField(
+        max_length=15,
+        choices=EstadoCurso.choices,
+        default=EstadoCurso.ACTIVO,
+    )
 
     def __str__(self):
         return (
@@ -59,7 +64,7 @@ class Curso(models.Model):
             f"{self.fecha_inicio} - {self.fecha_fin}"
             f"{self.nombre} ({self.academia.nombre})"
         )
-    
+
 
     class Meta:
         db_table = "curso"
@@ -75,19 +80,21 @@ class Paralelo(models.Model):
     docente = models.ForeignKey(
         Docente,
         on_delete=models.PROTECT,
-        related_name="paralelos"
+        related_name="paralelos",
+        null=True,
+        blank=True,
     )
 
     nombre = models.CharField(max_length=20)
-    dias_clase = models.CharField(max_length=50)
+    dias_clase = models.JSONField(default=list)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
     cupo_max = models.PositiveIntegerField()
 
     estado = models.CharField(
-        max_length=10,
-        choices=Estado.choices,
-        default=Estado.ACTIVO
+        max_length=15,
+        choices=EstadoParalelo.choices,
+        default=EstadoParalelo.ACTIVO
     )
 
     def __str__(self):

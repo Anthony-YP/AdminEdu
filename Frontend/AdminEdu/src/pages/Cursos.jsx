@@ -1,12 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/api";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
+
+const FORM_VACIO = {
+    id: null,
+    academia: "",
+    nombre: "",
+    descripcion: "",
+    precio: "",
+    fecha_inicio: "",
+    fecha_fin: "",
+};
 
 export default function Cursos() {
     const { hasGroup } = useAuth();
@@ -19,23 +28,23 @@ export default function Cursos() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    // Filtros del listado
+    const [busqueda, setBusqueda] = useState("");
+    const [filtroEstado, setFiltroEstado] = useState("");
+    const [fechaDesde, setFechaDesde] = useState("");
+    const [fechaHasta, setFechaHasta] = useState("");
+    const [cursoExpandido, setCursoExpandido] = useState(null);
+
     // Estado del formulario (crear/editar)
     const [isFormOpen, setIsFormOpen] = useState(false);
-    const [formData, setFormData] = useState({
-        id: null,
-        academia: "",
-        nombre: "",
-        precio: "",
-        fecha_inicio: "",
-        fecha_fin: "",
-    });
+    const [formData, setFormData] = useState(FORM_VACIO);
+    const [imagenFile, setImagenFile] = useState(null);
+    const [imagenPreview, setImagenPreview] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState("");
 
-    // Estado para eliminación (doble confirmación)
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [cursoToDelete, setCursoToDelete] = useState(null);
-    const [deleting, setDeleting] = useState(false);
+    // Cambio de estado (baja lógica: Activo/Desactivado/Cerrado)
+    const [cambiandoEstado, setCambiandoEstado] = useState(null);
 
     // Cargar cursos y academias al montar
     useEffect(() => {
@@ -96,28 +105,40 @@ export default function Cursos() {
         return "Ocurrió un error inesperado.";
     };
 
+    // ─── Listado filtrado ───────────────────────────────────────────────
+
+    const cursosFiltrados = useMemo(() => {
+        const q = busqueda.trim().toLowerCase();
+        return cursos.filter((curso) => {
+            if (filtroEstado && curso.estado !== filtroEstado) return false;
+            if (q && !curso.nombre.toLowerCase().includes(q) && !(curso.academia_nombre || "").toLowerCase().includes(q)) return false;
+            // Rango de fechas: se muestra el curso si su periodo (fecha_inicio -
+            // fecha_fin) se solapa con el rango seleccionado.
+            if (fechaDesde && curso.fecha_fin < fechaDesde) return false;
+            if (fechaHasta && curso.fecha_inicio > fechaHasta) return false;
+            return true;
+        });
+    }, [cursos, busqueda, filtroEstado, fechaDesde, fechaHasta]);
+
     // ─── Formulario ────────────────────────────────────────────────────
 
     const handleOpenForm = (curso = null) => {
         setFormError("");
+        setImagenFile(null);
         if (curso) {
             setFormData({
                 id: curso.id,
                 academia: curso.academia?.id ?? curso.academia ?? "",
                 nombre: curso.nombre || "",
+                descripcion: curso.descripcion || "",
                 precio: curso.precio ?? "",
                 fecha_inicio: curso.fecha_inicio || "",
                 fecha_fin: curso.fecha_fin || "",
             });
+            setImagenPreview(curso.imagen || null);
         } else {
-            setFormData({
-                id: null,
-                academia: "",
-                nombre: "",
-                precio: "",
-                fecha_inicio: "",
-                fecha_fin: "",
-            });
+            setFormData(FORM_VACIO);
+            setImagenPreview(null);
         }
         setIsFormOpen(true);
     };
@@ -132,6 +153,13 @@ export default function Cursos() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleImagenChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImagenFile(file);
+        setImagenPreview(URL.createObjectURL(file));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFormError("");
@@ -143,6 +171,10 @@ export default function Cursos() {
         }
         if (!formData.nombre.trim()) {
             setFormError("El nombre del curso es requerido.");
+            return;
+        }
+        if (!formData.descripcion.trim()) {
+            setFormError("La descripción del curso es requerida.");
             return;
         }
         if (!formData.precio || isNaN(formData.precio) || parseFloat(formData.precio) < 0) {
@@ -164,13 +196,14 @@ export default function Cursos() {
 
         try {
             setSubmitting(true);
-            const payload = {
-                academia: Number(formData.academia),
-                nombre: formData.nombre.trim(),
-                precio: parseFloat(formData.precio),
-                fecha_inicio: formData.fecha_inicio,
-                fecha_fin: formData.fecha_fin,
-            };
+            const payload = new FormData();
+            payload.append("academia", Number(formData.academia));
+            payload.append("nombre", formData.nombre.trim());
+            payload.append("descripcion", formData.descripcion.trim());
+            payload.append("precio", parseFloat(formData.precio));
+            payload.append("fecha_inicio", formData.fecha_inicio);
+            payload.append("fecha_fin", formData.fecha_fin);
+            if (imagenFile) payload.append("imagen", imagenFile);
 
             let response;
             if (formData.id) {
@@ -191,34 +224,18 @@ export default function Cursos() {
         }
     };
 
-    // ─── Eliminación (doble confirmación) ─────────────────────────────
+    // ─── Cambio de estado (baja lógica) ────────────────────────────────
 
-    const confirmDelete = (curso) => {
-        setCursoToDelete(curso);
-        setIsDeleteOpen(true);
-    };
-
-    const handleDelete = async () => {
-        if (!cursoToDelete) return;
+    const handleCambiarEstado = async (curso, nuevoEstado) => {
         try {
-            setDeleting(true);
-            await api.delete(`/cursos/${cursoToDelete.id}/`);
-            setCursos(cursos.filter((c) => c.id !== cursoToDelete.id));
-            setSuccess(`Curso "${cursoToDelete.nombre}" eliminado exitosamente.`);
-            setIsDeleteOpen(false);
-            setCursoToDelete(null);
+            setCambiandoEstado(curso.id);
+            const response = await api.post(`/cursos/${curso.id}/estado/`, { estado: nuevoEstado });
+            setCursos(cursos.map((c) => (c.id === curso.id ? response.data : c)));
+            setSuccess(`Curso "${curso.nombre}" actualizado a estado ${nuevoEstado}.`);
         } catch (err) {
-            console.error("Error al eliminar curso:", err);
-            let msg = "No se pudo eliminar el curso.";
-            if (err.response?.status === 409 || err.response?.data?.detail?.includes("asociados")) {
-                msg = "No se puede eliminar el curso porque tiene paralelos asociados.";
-            } else {
-                msg = extraerMensajeError(err);
-            }
-            setError(msg);
-            setIsDeleteOpen(false);
+            setError(extraerMensajeError(err));
         } finally {
-            setDeleting(false);
+            setCambiandoEstado(null);
         }
     };
 
@@ -254,7 +271,7 @@ export default function Cursos() {
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
                         Cursos
                         <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                            {cursos.length} {cursos.length === 1 ? "curso" : "cursos"}
+                            {cursosFiltrados.length} de {cursos.length} {cursos.length === 1 ? "curso" : "cursos"}
                         </span>
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">Administre los cursos ofertados</p>
@@ -273,142 +290,158 @@ export default function Cursos() {
             {success && <Alert variant="success">{success}</Alert>}
             {error && <Alert variant="error">{error}</Alert>}
 
-            {/* Tabla estilizada */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <Table>
-                    <TableHead className="bg-gray-50/50">
-                        <TableRow>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Nombre
-                            </TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Precio
-                            </TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Inicio
-                            </TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Fin
-                            </TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                Estado
-                            </TableHeader>
-                            {esDirector && (
-                                <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
-                                    Acciones
-                                </TableHeader>
-                            )}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {cursos.length === 0 ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={esDirector ? 6 : 5}
-                                    className="text-center text-gray-500 py-8"
-                                >
-                                    <div className="flex flex-col items-center">
-                                        <svg
-                                            className="w-12 h-12 text-gray-300 mb-2"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={1.5}
-                                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                            />
-                                        </svg>
-                                        <span className="font-medium">No hay cursos registrados</span>
-                                        {esDirector && (
-                                            <Button
-                                                variant="link"
-                                                onClick={() => handleOpenForm()}
-                                                className="mt-2 text-blue-600"
-                                            >
-                                                Crear el primer curso
-                                            </Button>
-                                        )}
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            cursos.map((curso) => {
-                                // Determinar estado según fechas
-                                const hoy = new Date();
-                                const fechaInicio = new Date(curso.fecha_inicio);
-                                const fechaFin = new Date(curso.fecha_fin);
-                                let estado = "Activo";
-                                let variant = "green";
-                                if (hoy < fechaInicio) {
-                                    estado = "Próximo";
-                                    variant = "yellow";
-                                } else if (hoy > fechaFin) {
-                                    estado = "Finalizado";
-                                    variant = "gray";
-                                }
-
-                                return (
-                                    <TableRow
-                                        key={curso.id}
-                                        className="hover:bg-gray-50/50 transition-colors"
-                                    >
-                                        <TableCell className="font-semibold text-gray-800">
-                                            {curso.nombre}
-                                        </TableCell>
-                                        <TableCell className="font-medium text-gray-900">
-                                            ${parseFloat(curso.precio).toFixed(2)}
-                                        </TableCell>
-                                        <TableCell className="text-gray-600">
-                                            {new Date(curso.fecha_inicio).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell className="text-gray-600">
-                                            {new Date(curso.fecha_fin).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge
-                                                variant={variant}
-                                                className={`${variant === "green"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : variant === "yellow"
-                                                            ? "bg-yellow-100 text-yellow-800"
-                                                            : "bg-gray-100 text-gray-800"
-                                                    }`}
-                                            >
-                                                {estado}
-                                            </Badge>
-                                        </TableCell>
-                                        {esDirector && (
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleOpenForm(curso)}
-                                                        className="text-blue-600 hover:bg-blue-50"
-                                                    >
-                                                        Editar
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghostDanger"
-                                                        size="sm"
-                                                        onClick={() => confirmDelete(curso)}
-                                                        className="text-red-600 hover:bg-red-50"
-                                                    >
-                                                        Eliminar
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        )}
-                                    </TableRow>
-                                );
-                            })
-                        )}
-                    </TableBody>
-                </Table>
+            {/* Barra de filtros */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre o academia..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                <select
+                    className="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={filtroEstado}
+                    onChange={(e) => setFiltroEstado(e.target.value)}
+                >
+                    <option value="">Todos los estados</option>
+                    <option value="ACTIVO">Activo</option>
+                    <option value="DESACTIVADO">Desactivado</option>
+                    <option value="CERRADO">Cerrado</option>
+                </select>
+                <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-500 whitespace-nowrap">Desde</label>
+                    <input
+                        type="date"
+                        value={fechaDesde}
+                        onChange={(e) => setFechaDesde(e.target.value)}
+                        className="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <label className="text-sm text-gray-500 whitespace-nowrap">Hasta</label>
+                    <input
+                        type="date"
+                        value={fechaHasta}
+                        onChange={(e) => setFechaHasta(e.target.value)}
+                        min={fechaDesde || undefined}
+                        className="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {(fechaDesde || fechaHasta) && (
+                        <button
+                            type="button"
+                            onClick={() => { setFechaDesde(""); setFechaHasta(""); }}
+                            className="text-xs text-gray-400 hover:text-gray-600"
+                        >
+                            Limpiar
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* Grid de tarjetas */}
+            {cursosFiltrados.length === 0 ? (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 flex flex-col items-center text-gray-500">
+                    <svg className="w-12 h-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span className="font-medium">
+                        {cursos.length === 0 ? "No hay cursos registrados" : "Ningún curso coincide con los filtros"}
+                    </span>
+                    {esDirector && cursos.length === 0 && (
+                        <Button variant="link" onClick={() => handleOpenForm()} className="mt-2 text-blue-600">
+                            Crear el primer curso
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {cursosFiltrados.map((curso) => {
+                        const variant = curso.estado === "ACTIVO" ? "green" : curso.estado === "CERRADO" ? "gray" : "yellow";
+                        const paralelos = curso.paralelos || [];
+                        const expandido = cursoExpandido === curso.id;
+
+                        return (
+                            <div key={curso.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                                <div className="h-36 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                    {curso.imagen ? (
+                                        <img src={curso.imagen} alt={curso.nombre} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <svg className="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 8h16M4 4h16a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z" />
+                                        </svg>
+                                    )}
+                                </div>
+
+                                <div className="p-4 flex-1 flex flex-col gap-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <h3 className="font-semibold text-gray-900 leading-tight">{curso.nombre}</h3>
+                                        <Badge variant={variant}>{curso.estado}</Badge>
+                                    </div>
+                                    <Badge variant="blue" className="self-start">{curso.academia_nombre}</Badge>
+                                    {curso.descripcion && (
+                                        <p className="text-sm text-gray-500 line-clamp-2">{curso.descripcion}</p>
+                                    )}
+                                    <div className="flex items-center justify-between text-sm mt-1">
+                                        <span className="font-semibold text-gray-900">${parseFloat(curso.precio).toFixed(2)}</span>
+                                        <span className="text-gray-500">
+                                            {new Date(curso.fecha_inicio).toLocaleDateString()} - {new Date(curso.fecha_fin).toLocaleDateString()}
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setCursoExpandido(expandido ? null : curso.id)}
+                                        className="mt-1 text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1 self-start"
+                                    >
+                                        {paralelos.length} {paralelos.length === 1 ? "paralelo" : "paralelos"}
+                                        <svg className={`w-3 h-3 transition-transform ${expandido ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+
+                                    {expandido && (
+                                        <div className="border-t border-gray-100 pt-2 mt-1 space-y-1.5">
+                                            {paralelos.length === 0 ? (
+                                                <p className="text-xs text-gray-400">Sin paralelos creados todavía.</p>
+                                            ) : (
+                                                paralelos.map((p) => (
+                                                    <div key={p.id} className="flex items-center justify-between text-xs">
+                                                        <span className="text-gray-700 font-medium">{p.nombre}</span>
+                                                        <span className="text-gray-400">{p.docente_nombre || "Sin docente"}</span>
+                                                        <Badge variant={p.estado === "ACTIVO" ? "green" : "gray"} className="text-[10px] py-0">{p.estado}</Badge>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {esDirector && (
+                                    <div className="border-t border-gray-100 px-4 py-3 flex items-center justify-between gap-2 bg-gray-50/50">
+                                        <Button variant="ghost" size="sm" onClick={() => handleOpenForm(curso)} className="text-blue-600 hover:bg-blue-50">
+                                            Editar
+                                        </Button>
+                                        <select
+                                            className="text-xs border rounded px-1.5 py-1"
+                                            value={curso.estado}
+                                            disabled={cambiandoEstado === curso.id}
+                                            onChange={(e) => handleCambiarEstado(curso, e.target.value)}
+                                        >
+                                            <option value="ACTIVO">Activo</option>
+                                            <option value="DESACTIVADO">Desactivado</option>
+                                            <option value="CERRADO">Cerrado</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* ─── MODAL DE FORMULARIO (personalizado) ───────────────── */}
             {isFormOpen && (
@@ -456,6 +489,27 @@ export default function Cursos() {
                                         required
                                         autoFocus
                                     />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
+                                    <textarea
+                                        name="descripcion"
+                                        value={formData.descripcion}
+                                        onChange={handleChange}
+                                        rows={3}
+                                        required
+                                        placeholder="Breve descripción del contenido y objetivos del curso"
+                                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Imagen del curso (opcional)</label>
+                                    <div className="flex items-center gap-3">
+                                        {imagenPreview && (
+                                            <img src={imagenPreview} alt="Vista previa" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                                        )}
+                                        <input type="file" accept="image/*" onChange={handleImagenChange} className="text-sm" />
+                                    </div>
                                 </div>
                                 <Input
                                     label="Precio (USD)"
@@ -508,34 +562,6 @@ export default function Cursos() {
                 </div>
             )}
 
-            {/* ─── MODAL DE CONFIRMACIÓN PARA ELIMINAR (personalizado) ─ */}
-            {isDeleteOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-                    <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Eliminar Curso</h3>
-                        <p className="text-gray-600 mb-6">
-                            ¿Está seguro de que desea eliminar el curso "<strong>{cursoToDelete?.nombre}</strong>"?
-                            Esta acción eliminará permanentemente el curso y todos sus datos asociados, incluyendo paralelos y matrículas vinculadas.
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <Button
-                                variant="secondary"
-                                onClick={() => setIsDeleteOpen(false)}
-                                disabled={deleting}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                variant="danger"
-                                onClick={handleDelete}
-                                isLoading={deleting}
-                            >
-                                Eliminar Curso
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

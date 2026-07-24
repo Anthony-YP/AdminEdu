@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/api";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/Table";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { SearchSelect } from "../components/ui/SearchSelect";
 import { Alert } from "../components/ui/Alert";
 import { Badge } from "../components/ui/Badge";
+
+const DIAS_SEMANA = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
 export default function Paralelos() {
     const { hasGroup } = useAuth();
@@ -20,6 +22,12 @@ export default function Paralelos() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    // Filtros del listado
+    const [busqueda, setBusqueda] = useState("");
+    const [filtroCurso, setFiltroCurso] = useState("");
+    const [filtroEstado, setFiltroEstado] = useState("");
+    const [cursosColapsados, setCursosColapsados] = useState({});
+
     // Formulario (crear/editar)
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -27,7 +35,7 @@ export default function Paralelos() {
         curso: "",
         docente: "",
         nombre: "",
-        dias_clase: "",
+        dias_clase: [],
         hora_inicio: "",
         hora_fin: "",
         cupo_max: ""
@@ -35,10 +43,8 @@ export default function Paralelos() {
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState("");
 
-    // Eliminación (doble confirmación)
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [paraleloToDelete, setParaleloToDelete] = useState(null);
-    const [deleting, setDeleting] = useState(false);
+    // Cambio de estado (baja lógica)
+    const [cambiandoEstado, setCambiandoEstado] = useState(null);
 
     // Cargar datos (paralelos y cursos)
     useEffect(() => {
@@ -94,6 +100,42 @@ export default function Paralelos() {
         return "Ocurrió un error inesperado.";
     };
 
+    // ─── Listado filtrado y agrupado por curso ─────────────────────────
+
+    const gruposPorCurso = useMemo(() => {
+        const q = busqueda.trim().toLowerCase();
+
+        const filtrados = paralelos.filter((p) => {
+            if (filtroCurso && String(p.curso) !== String(filtroCurso)) return false;
+            if (filtroEstado && p.estado !== filtroEstado) return false;
+            if (q) {
+                const cursoNombre = p.curso_nombre || "";
+                const docenteNombre = p.docente_nombre || "";
+                const haystack = `${cursoNombre} ${p.nombre} ${docenteNombre}`.toLowerCase();
+                if (!haystack.includes(q)) return false;
+            }
+            return true;
+        });
+
+        const grupos = new Map();
+        for (const p of filtrados) {
+            const key = p.curso;
+            if (!grupos.has(key)) {
+                grupos.set(key, {
+                    cursoId: key,
+                    cursoNombre: p.curso_nombre || cursos.find((c) => c.id === key)?.nombre || `ID ${key}`,
+                    paralelos: [],
+                });
+            }
+            grupos.get(key).paralelos.push(p);
+        }
+        return Array.from(grupos.values()).sort((a, b) => a.cursoNombre.localeCompare(b.cursoNombre));
+    }, [paralelos, cursos, busqueda, filtroCurso, filtroEstado]);
+
+    const toggleColapso = (cursoId) => {
+        setCursosColapsados((prev) => ({ ...prev, [cursoId]: !prev[cursoId] }));
+    };
+
     // ─── Formulario ────────────────────────────────────────────────────
 
     const handleOpenForm = (paralelo = null) => {
@@ -102,9 +144,9 @@ export default function Paralelos() {
             setFormData({
                 id: paralelo.id,
                 curso: paralelo.curso.toString(),
-                docente: paralelo.docente.toString(),
+                docente: paralelo.docente ? paralelo.docente.toString() : "",
                 nombre: paralelo.nombre || "",
-                dias_clase: paralelo.dias_clase || "",
+                dias_clase: Array.isArray(paralelo.dias_clase) ? paralelo.dias_clase : [],
                 hora_inicio: paralelo.hora_inicio || "",
                 hora_fin: paralelo.hora_fin || "",
                 cupo_max: paralelo.cupo_max?.toString() || ""
@@ -115,7 +157,7 @@ export default function Paralelos() {
                 curso: "",
                 docente: "",
                 nombre: "",
-                dias_clase: "",
+                dias_clase: [],
                 hora_inicio: "",
                 hora_fin: "",
                 cupo_max: ""
@@ -134,6 +176,15 @@ export default function Paralelos() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const toggleDia = (dia) => {
+        setFormData((prev) => ({
+            ...prev,
+            dias_clase: prev.dias_clase.includes(dia)
+                ? prev.dias_clase.filter((d) => d !== dia)
+                : [...prev.dias_clase, dia],
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFormError("");
@@ -143,16 +194,12 @@ export default function Paralelos() {
             setFormError("Debe seleccionar un curso.");
             return;
         }
-        if (!formData.docente) {
-            setFormError("Debe seleccionar un docente.");
-            return;
-        }
         if (!formData.nombre.trim()) {
             setFormError("El nombre del paralelo es requerido.");
             return;
         }
-        if (!formData.dias_clase.trim()) {
-            setFormError("Los días de clase son requeridos.");
+        if (formData.dias_clase.length === 0) {
+            setFormError("Debe seleccionar al menos un día de clase.");
             return;
         }
         if (!formData.hora_inicio || !formData.hora_fin) {
@@ -172,9 +219,9 @@ export default function Paralelos() {
             setSubmitting(true);
             const payload = {
                 curso: Number(formData.curso),
-                docente: Number(formData.docente),
+                docente: formData.docente ? Number(formData.docente) : null,
                 nombre: formData.nombre.trim(),
-                dias_clase: formData.dias_clase.trim(),
+                dias_clase: formData.dias_clase,
                 hora_inicio: formData.hora_inicio,
                 hora_fin: formData.hora_fin,
                 cupo_max: Number(formData.cupo_max)
@@ -199,34 +246,18 @@ export default function Paralelos() {
         }
     };
 
-    // ─── Eliminación ────────────────────────────────────────────────────
+    // ─── Cambio de estado (baja lógica) ────────────────────────────────
 
-    const confirmDelete = (paralelo) => {
-        setParaleloToDelete(paralelo);
-        setIsDeleteOpen(true);
-    };
-
-    const handleDelete = async () => {
-        if (!paraleloToDelete) return;
+    const handleCambiarEstado = async (paralelo, nuevoEstado) => {
         try {
-            setDeleting(true);
-            await api.delete(`/paralelos/${paraleloToDelete.id}/`);
-            setParalelos(paralelos.filter(p => p.id !== paraleloToDelete.id));
-            setSuccess(`Paralelo "${paraleloToDelete.nombre}" eliminado exitosamente.`);
-            setIsDeleteOpen(false);
-            setParaleloToDelete(null);
+            setCambiandoEstado(paralelo.id);
+            const response = await api.post(`/paralelos/${paralelo.id}/estado/`, { estado: nuevoEstado });
+            setParalelos(paralelos.map(p => p.id === paralelo.id ? response.data : p));
+            setSuccess(`Paralelo "${paralelo.nombre}" actualizado a estado ${nuevoEstado}.`);
         } catch (err) {
-            console.error("Error al eliminar paralelo:", err);
-            let msg = "No se pudo eliminar el paralelo.";
-            if (err.response?.status === 409 || err.response?.data?.detail?.includes("asociados")) {
-                msg = "No se puede eliminar el paralelo porque tiene matrículas u otros registros asociados.";
-            } else {
-                msg = extraerMensajeError(err);
-            }
-            setError(msg);
-            setIsDeleteOpen(false);
+            setError(extraerMensajeError(err));
         } finally {
-            setDeleting(false);
+            setCambiandoEstado(null);
         }
     };
 
@@ -245,6 +276,8 @@ export default function Paralelos() {
 
     // ─── JSX principal ─────────────────────────────────────────────────
 
+    const totalFiltrados = gruposPorCurso.reduce((acc, g) => acc + g.paralelos.length, 0);
+
     return (
         <div className="space-y-6 animate-slideDown">
             {/* Header con contador */}
@@ -253,10 +286,10 @@ export default function Paralelos() {
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
                         Paralelos
                         <span className="ml-2 text-sm font-normal text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                            {paralelos.length} {paralelos.length === 1 ? "sección" : "secciones"}
+                            {totalFiltrados} de {paralelos.length} {paralelos.length === 1 ? "sección" : "secciones"}
                         </span>
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">Gestión de secciones, horarios y cupos</p>
+                    <p className="text-sm text-gray-500 mt-1">Gestión de secciones, horarios y cupos, agrupadas por curso</p>
                 </div>
                 {esAdmin && (
                     <Button onClick={() => handleOpenForm()} variant="primary">
@@ -272,79 +305,119 @@ export default function Paralelos() {
             {success && <Alert variant="success">{success}</Alert>}
             {error && <Alert variant="error">{error}</Alert>}
 
-            {/* Tabla estilizada */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <Table>
-                    <TableHead className="bg-gray-50/50">
-                        <TableRow>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Curso</TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Paralelo</TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Docente</TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Horario</TableHeader>
-                            <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Cupo</TableHeader>
-                            {esAdmin && <TableHeader className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Acciones</TableHeader>}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {paralelos.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={esAdmin ? 6 : 5} className="text-center text-gray-500 py-8">
-                                    <div className="flex flex-col items-center">
-                                        <svg className="w-12 h-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        <span className="font-medium">No hay paralelos registrados</span>
-                                        {esAdmin && (
-                                            <Button variant="link" onClick={() => handleOpenForm()} className="mt-2 text-blue-600">
-                                                Crear el primer paralelo
-                                            </Button>
-                                        )}
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            paralelos.map((paralelo) => {
-                                // Buscar el nombre del curso para mostrarlo (opcional)
-                                const curso = cursos.find(c => c.id === paralelo.curso);
-                                const cursoNombre = curso ? curso.nombre : `ID ${paralelo.curso}`;
-                                const docente = docentes.find(d => d.id === paralelo.docente);
-                                const docenteNombre = docente
-                                    ? `${docente.nombres} ${docente.apellidos}`
-                                    : `ID ${paralelo.docente}`;
-
-                                return (
-                                    <TableRow key={paralelo.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <TableCell className="font-medium text-gray-900">
-                                            <Badge variant="blue">{cursoNombre}</Badge>
-                                        </TableCell>
-                                        <TableCell className="font-semibold text-gray-800">{paralelo.nombre}</TableCell>
-                                        <TableCell className="text-gray-600">
-                                            <Badge variant="gray">{docenteNombre}</Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="text-sm text-gray-900">{paralelo.dias_clase}</div>
-                                            <div className="text-xs text-gray-500">{paralelo.hora_inicio} - {paralelo.hora_fin}</div>
-                                        </TableCell>
-                                        <TableCell className="text-gray-600 font-medium">{paralelo.cupo_max}</TableCell>
-                                        {esAdmin && (
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="sm" onClick={() => handleOpenForm(paralelo)} className="text-blue-600 hover:bg-blue-50">
-                                                        Editar
-                                                    </Button>
-                                                    <Button variant="ghostDanger" size="sm" onClick={() => confirmDelete(paralelo)} className="text-red-600 hover:bg-red-50">
-                                                        Eliminar
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        )}
-                                    </TableRow>
-                                );
-                            })
-                        )}
-                    </TableBody>
-                </Table>
+            {/* Barra de filtros */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Buscar por curso, paralelo o docente..."
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                <select
+                    className="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={filtroCurso}
+                    onChange={(e) => setFiltroCurso(e.target.value)}
+                >
+                    <option value="">Todos los cursos</option>
+                    {cursos.map((c) => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                    ))}
+                </select>
+                <select
+                    className="border border-gray-300 rounded-lg text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={filtroEstado}
+                    onChange={(e) => setFiltroEstado(e.target.value)}
+                >
+                    <option value="">Todos los estados</option>
+                    <option value="ACTIVO">Activo</option>
+                    <option value="DESACTIVADO">Desactivado</option>
+                </select>
             </div>
+
+            {/* Grupos por curso */}
+            {gruposPorCurso.length === 0 ? (
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm py-16 flex flex-col items-center text-gray-500">
+                    <svg className="w-12 h-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span className="font-medium">
+                        {paralelos.length === 0 ? "No hay paralelos registrados" : "Ningún paralelo coincide con los filtros"}
+                    </span>
+                    {esAdmin && paralelos.length === 0 && (
+                        <Button variant="link" onClick={() => handleOpenForm()} className="mt-2 text-blue-600">
+                            Crear el primer paralelo
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {gruposPorCurso.map((grupo) => {
+                        const colapsado = !!cursosColapsados[grupo.cursoId];
+                        return (
+                            <div key={grupo.cursoId} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleColapso(grupo.cursoId)}
+                                    className="w-full flex items-center justify-between px-5 py-3.5 bg-gray-50/70 hover:bg-gray-100/70 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <svg className={`w-4 h-4 text-gray-400 transition-transform ${colapsado ? "-rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                        <span className="font-semibold text-gray-900">{grupo.cursoNombre}</span>
+                                        <Badge variant="blue">{grupo.paralelos.length} {grupo.paralelos.length === 1 ? "paralelo" : "paralelos"}</Badge>
+                                    </div>
+                                </button>
+
+                                {!colapsado && (
+                                    <div className="divide-y divide-gray-100">
+                                        {grupo.paralelos.map((paralelo) => (
+                                            <div key={paralelo.id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3.5 hover:bg-gray-50/50 transition-colors">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-semibold text-gray-800">{paralelo.nombre}</span>
+                                                        <Badge variant={paralelo.estado === "ACTIVO" ? "green" : "gray"}>{paralelo.estado}</Badge>
+                                                    </div>
+                                                    <div className="text-sm text-gray-500 mt-0.5">
+                                                        {Array.isArray(paralelo.dias_clase) ? paralelo.dias_clase.join(", ") : paralelo.dias_clase}
+                                                        {" · "}{paralelo.hora_inicio} - {paralelo.hora_fin}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600 sm:w-48">
+                                                    {paralelo.docente_nombre || <span className="text-gray-400">Sin asignar</span>}
+                                                </div>
+                                                <div className="text-sm text-gray-600 sm:w-20">Cupo: {paralelo.cupo_max}</div>
+                                                {esAdmin && (
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="ghost" size="sm" onClick={() => handleOpenForm(paralelo)} className="text-blue-600 hover:bg-blue-50">
+                                                            Editar
+                                                        </Button>
+                                                        <select
+                                                            className="text-xs border rounded px-1.5 py-1"
+                                                            value={paralelo.estado}
+                                                            disabled={cambiandoEstado === paralelo.id}
+                                                            onChange={(e) => handleCambiarEstado(paralelo, e.target.value)}
+                                                        >
+                                                            <option value="ACTIVO">Activo</option>
+                                                            <option value="DESACTIVADO">Desactivado</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* ─── MODAL DE FORMULARIO (personalizado) ───────────────── */}
             {isFormOpen && (
@@ -384,31 +457,41 @@ export default function Paralelos() {
                                     required
                                     placeholder="Ej. A, B, Nocturno..."
                                 />
-                                <Select
-                                    label="Docente"
-                                    name="docente"
+                                <SearchSelect
+                                    label="Docente (opcional)"
                                     value={formData.docente}
-                                    onChange={handleChange}
-                                    required
+                                    onChange={(value) => setFormData((f) => ({ ...f, docente: value }))}
                                     options={docentes.map((docente) => ({
                                         value: docente.id.toString(),
-                                        label: `${docente.nombres} ${docente.apellidos} (${docente.numero_identificacion || "Sin identificación"})`
+                                        label: `${docente.nombres} ${docente.apellidos}`,
+                                        sublabel: docente.numero_identificacion || "Sin identificación",
                                     }))}
-                                    placeholder="Selecciona un docente"
+                                    placeholder="Buscar docente por nombre o cédula..."
                                 />
                                 <p className="col-span-1 sm:col-span-2 text-xs text-gray-500 -mt-2 mb-2">
-                                    * Selecciona el docente que impartirá el paralelo desde la lista registrada.
+                                    * El paralelo puede crearse sin docente y asignarse más adelante.
                                 </p>
                             </div>
 
-                            <Input
-                                label="Días de Clase"
-                                name="dias_clase"
-                                value={formData.dias_clase}
-                                onChange={handleChange}
-                                required
-                                placeholder="Ej. Lunes y Miércoles"
-                            />
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Días de Clase</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {DIAS_SEMANA.map((dia) => (
+                                        <button
+                                            key={dia}
+                                            type="button"
+                                            onClick={() => toggleDia(dia)}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                                                formData.dias_clase.includes(dia)
+                                                    ? "bg-blue-600 text-white border-blue-600"
+                                                    : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
+                                            }`}
+                                        >
+                                            {dia}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Input
@@ -449,27 +532,6 @@ export default function Paralelos() {
                                 </Button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-
-            {/* ─── MODAL DE CONFIRMACIÓN PARA ELIMINAR (personalizado) ─ */}
-            {isDeleteOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
-                    <div className="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Eliminar Paralelo</h3>
-                        <p className="text-gray-600 mb-6">
-                            ¿Está seguro de que desea eliminar el paralelo "<strong>{paraleloToDelete?.nombre}</strong>"?
-                            Esta acción eliminará permanentemente el paralelo y todos sus datos asociados, incluyendo matrículas vinculadas.
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <Button variant="secondary" onClick={() => setIsDeleteOpen(false)} disabled={deleting}>
-                                Cancelar
-                            </Button>
-                            <Button variant="danger" onClick={handleDelete} isLoading={deleting}>
-                                Eliminar Paralelo
-                            </Button>
-                        </div>
                     </div>
                 </div>
             )}

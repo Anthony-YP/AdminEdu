@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { useState } from "react";
+import NotificationBell from "../../common/NotificationBell";
 
 const navItems = [
     { path: "/aspirante", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6", exact: true },
@@ -211,13 +212,14 @@ export default function AspiranteLayout() {
                         </svg>
                     </button>
                     <span className="text-sm font-semibold text-slate-800">{currentLabel}</span>
-                    <div className="w-8" />
+                    <NotificationBell variant="light" verTodasRuta="/aspirante/notificaciones" />
                 </header>
 
                 {/* Desktop topbar */}
                 <header className="hidden lg:flex items-center justify-between px-8 h-16 bg-white border-b border-slate-200 flex-shrink-0">
                     <h1 className="text-xl font-bold text-slate-800">{currentLabel}</h1>
                     <div className="flex items-center gap-4">
+                        <NotificationBell variant="light" verTodasRuta="/aspirante/notificaciones" />
                         <div className="text-right">
                             <p className="text-sm font-semibold text-slate-700">
                                 {usuario?.first_name && usuario?.last_name

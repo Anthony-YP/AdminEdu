@@ -4,6 +4,22 @@ from django.utils import timezone
 
 from ..models.matricula.Matricula import Matricula
 from ..models.matricula.estado_matricula import EstadoMatricula
+from ..models.notificaciones.Notificacion import Notificacion
+
+
+def _notificar_estudiante(matricula, mensaje):
+    """
+    RF28: notifica al estudiante sobre un cambio de estado de su
+    matrícula. Si el estudiante no tiene una cuenta de usuario
+    asociada, no hay a quién notificar y se omite en silencio.
+    """
+
+    usuario = matricula.estudiante.usuario
+
+    if usuario is None:
+        return
+
+    Notificacion.objects.create(usuario=usuario, mensaje=mensaje)
 
 
 class MatriculaService:
@@ -157,6 +173,12 @@ class MatriculaService:
             ]
         )
 
+        _notificar_estudiante(
+            matricula,
+            f"Tu matrícula en {matricula.paralelo_matricula.curso.nombre} "
+            f"({matricula.paralelo_matricula.nombre}) fue aprobada.",
+        )
+
         return matricula
 
     @staticmethod
@@ -181,6 +203,47 @@ class MatriculaService:
             "Debe ingresar el motivo por el cuál se rechaza la matricula")
 
         matricula.estado = EstadoMatricula.RECHAZADA
+        matricula.comentario = comentario
+
+        matricula.save(
+            update_fields=[
+                "estado",
+                "comentario",
+            ]
+        )
+
+        _notificar_estudiante(
+            matricula,
+            f"Tu matrícula en {matricula.paralelo_matricula.curso.nombre} "
+            f"({matricula.paralelo_matricula.nombre}) fue rechazada: {comentario}",
+        )
+
+        return matricula
+
+    @staticmethod
+    @transaction.atomic
+    def cancelar_matricula(matricula, comentario):
+        """
+        RF15/RF17:
+        Cancela una matrícula pendiente o aprobada (antes de finalizar
+        el curso), dejando registrado el motivo de la cancelación.
+        """
+
+        if matricula.estado not in (
+            EstadoMatricula.PENDIENTE,
+            EstadoMatricula.APROBADA,
+        ):
+            raise ValidationError(
+                "Solo se pueden cancelar matrículas "
+                "pendientes o aprobadas."
+            )
+
+        if not comentario or not comentario.strip():
+            raise ValidationError(
+                "Debe ingresar el motivo por el cuál se cancela la matricula"
+            )
+
+        matricula.estado = EstadoMatricula.CANCELADA
         matricula.comentario = comentario
 
         matricula.save(
@@ -286,17 +349,35 @@ class MatriculaService:
         )
 
     @staticmethod
+    def calcular_porcentaje_asistencia(matricula):
+        """
+        RF09:
+        Calcula el porcentaje de asistencia de un estudiante
+        en la matrícula (sesiones marcadas como presente sobre
+        el total de sesiones registradas).
+        """
+
+        total = matricula.asistencias.count()
+
+        if total == 0:
+            return None
+
+        presentes = matricula.asistencias.filter(presente=True).count()
+
+        return round((presentes / total) * 100, 2)
+
+    @staticmethod
     def listar_matriculas_paralelo(
         paralelo
     ):
         """
-        Obtiene todos los estudiantes matriculados
-        en un paralelo.
+        Obtiene los estudiantes matriculados (aprobados o ya finalizados)
+        en un paralelo, para pase de lista y registro de calificaciones.
         """
 
         return Matricula.objects.filter(
             paralelo_matricula=paralelo,
-            estado=EstadoMatricula.APROBADA
+            estado__in=[EstadoMatricula.APROBADA, EstadoMatricula.FINALIZADA],
         ).select_related(
             "estudiante",
             "paralelo_matricula",

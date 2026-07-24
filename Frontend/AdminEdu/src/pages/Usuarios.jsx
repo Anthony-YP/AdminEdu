@@ -33,6 +33,15 @@ export default function Usuarios() {
     const [usuarioToDelete, setUsuarioToDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
+    // Activar/Desactivar
+    const [cambiandoEstado, setCambiandoEstado] = useState(null);
+
+    // Modal de creación de usuario
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [createForm, setCreateForm] = useState({ username: "", password: "", email: "", groups: [] });
+    const [createError, setCreateError] = useState("");
+    const [creating, setCreating] = useState(false);
+
     // Cargar datos al montar
     useEffect(() => {
         if (!esDirector) {
@@ -103,7 +112,7 @@ export default function Usuarios() {
     const handleOpenEdit = (usuario) => {
         setUsuarioEdit(usuario);
         // Extraer IDs de grupos actuales
-        const currentGroups = usuario.groups ? usuario.groups.map(g => g.id) : [];
+        const currentGroups = usuario.groups_detail ? usuario.groups_detail.map(g => g.id) : [];
         setEditForm({ groups: currentGroups });
         setEditError("");
         setIsEditOpen(true);
@@ -145,6 +154,60 @@ export default function Usuarios() {
             setEditError(extraerMensajeError(err));
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    // ─── Activar/Desactivar ─────────────────────────────────────────────
+
+    const handleToggleActivo = async (usuario) => {
+        try {
+            setCambiandoEstado(usuario.id);
+            const response = await api.patch(`/usuarios/${usuario.id}/`, { is_active: !usuario.is_active });
+            setUsuarios(usuarios.map(u => u.id === usuario.id ? response.data : u));
+            setSuccess(`Usuario "${usuario.username}" ${response.data.is_active ? "activado" : "desactivado"}.`);
+        } catch (err) {
+            setError(extraerMensajeError(err));
+        } finally {
+            setCambiandoEstado(null);
+        }
+    };
+
+    // ─── Creación de usuario ────────────────────────────────────────────
+
+    const handleOpenCreate = () => {
+        setCreateForm({ username: "", password: "", email: "", groups: [] });
+        setCreateError("");
+        setIsCreateOpen(true);
+    };
+
+    const handleSubmitCreate = async (e) => {
+        e.preventDefault();
+        setCreateError("");
+
+        if (!createForm.username.trim() || !createForm.password) {
+            setCreateError("Usuario y contraseña son obligatorios.");
+            return;
+        }
+        if (createForm.password.length < 8) {
+            setCreateError("La contraseña debe tener al menos 8 caracteres.");
+            return;
+        }
+
+        try {
+            setCreating(true);
+            await api.post("/usuarios/", {
+                username: createForm.username.trim(),
+                password: createForm.password,
+                email: createForm.email.trim(),
+                groups: createForm.groups.map(Number),
+            });
+            setSuccess(`Usuario "${createForm.username}" creado exitosamente.`);
+            setIsCreateOpen(false);
+            cargarUsuarios();
+        } catch (err) {
+            setCreateError(extraerMensajeError(err));
+        } finally {
+            setCreating(false);
         }
     };
 
@@ -220,6 +283,12 @@ export default function Usuarios() {
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">Gestión de cuentas, roles y permisos</p>
                 </div>
+                <Button onClick={handleOpenCreate} variant="primary">
+                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nuevo Usuario
+                </Button>
             </div>
 
             {/* Alertas */}
@@ -254,8 +323,7 @@ export default function Usuarios() {
                         ) : (
                             usuarios.map((usuario) => {
                                 // Obtener nombres de grupos (roles)
-                                const gruposNombres = usuario.groups?.map(g => g.name) || [];
-                                const rolPrincipal = gruposNombres.length > 0 ? gruposNombres[0] : "Sin rol";
+                                const gruposNombres = usuario.groups_detail?.map(g => g.name) || [];
 
                                 return (
                                     <TableRow key={usuario.id} className="hover:bg-gray-50/50 transition-colors">
@@ -275,9 +343,15 @@ export default function Usuarios() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={usuario.is_active ? "green" : "gray"}>
-                                                {usuario.is_active ? "Activo" : "Inactivo"}
-                                            </Badge>
+                                            <button
+                                                onClick={() => handleToggleActivo(usuario)}
+                                                disabled={cambiandoEstado === usuario.id || usuario.id === user?.id}
+                                                title={usuario.id === user?.id ? "No puedes desactivar tu propia cuenta" : ""}
+                                            >
+                                                <Badge variant={usuario.is_active ? "green" : "gray"} className="cursor-pointer">
+                                                    {usuario.is_active ? "Activo" : "Inactivo"}
+                                                </Badge>
+                                            </button>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
@@ -347,6 +421,67 @@ export default function Usuarios() {
                                 </Button>
                                 <Button type="submit" variant="primary" isLoading={submitting}>
                                     Guardar Cambios
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── MODAL DE CREACIÓN DE USUARIO ─────────────────────── */}
+            {isCreateOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+                    <div className="relative bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
+                        <button
+                            onClick={() => setIsCreateOpen(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Nuevo Usuario</h2>
+
+                        <form onSubmit={handleSubmitCreate} className="space-y-5">
+                            {createError && <Alert variant="error">{createError}</Alert>}
+
+                            <Input
+                                label="Usuario"
+                                value={createForm.username}
+                                onChange={(e) => setCreateForm((f) => ({ ...f, username: e.target.value }))}
+                                required
+                            />
+                            <Input
+                                label="Contraseña"
+                                type="password"
+                                value={createForm.password}
+                                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                                required
+                            />
+                            <Input
+                                label="Correo electrónico"
+                                type="email"
+                                value={createForm.email}
+                                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                            />
+                            <Select
+                                label="Rol(es)"
+                                multiple
+                                value={createForm.groups}
+                                onChange={(e) => {
+                                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                    setCreateForm((f) => ({ ...f, groups: selected }));
+                                }}
+                                options={roles.map(rol => ({ value: rol.id.toString(), label: rol.name }))}
+                            />
+
+                            <div className="flex justify-end gap-3 border-t pt-4">
+                                <Button type="button" variant="secondary" onClick={() => setIsCreateOpen(false)} disabled={creating}>
+                                    Cancelar
+                                </Button>
+                                <Button type="submit" variant="primary" isLoading={creating}>
+                                    Crear Usuario
                                 </Button>
                             </div>
                         </form>

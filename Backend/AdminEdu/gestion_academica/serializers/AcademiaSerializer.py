@@ -1,25 +1,25 @@
 from rest_framework import serializers
 
 from gestion_academica.models.academia.Academia import Academia
+from gestion_academica.serializers.DireccionSerializer import DireccionSerializer
 
 
 class AcademiaSerializer(
     serializers.ModelSerializer
 ):
 
+    direccion = DireccionSerializer(read_only=True)
+
     class Meta:
 
         model = Academia
 
         fields = [
-            "nombre"
+            "id",
+            "nombre",
+            "telefono",
+            "direccion",
         ]
-
-        extra_kwargs = {
-            "nombre": {
-                "required": True
-            }
-        }
 
 
 class AcademiaCreateSerializer(

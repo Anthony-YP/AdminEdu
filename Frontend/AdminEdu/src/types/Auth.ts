@@ -21,7 +21,7 @@ export interface AuthContextType {
     login: (username: string, password: string) => Promise<void>;
     loginGoogle: () => void;
     completeOAuthLogin: (access: string, refresh: string) => Promise<Usuario>;
-    logout: () => void;
+    logout: () => Promise<void>;
     updateUser: (usuario: Usuario | null) => void;
     hasRole: (role: string) => boolean;
     hasGroup: (roles: string[]) => boolean;

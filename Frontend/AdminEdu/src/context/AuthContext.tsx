@@ -70,10 +70,16 @@ export function AuthProvider({ children }: Props) {
         AuthService.loginGoogle();
     }
 
-    function logout() {
+    async function logout() {
+        const access = localStorage.getItem("access");
+        const refresh = localStorage.getItem("refresh");
+        // Limpiamos la sesión local primero para que la UI reaccione al
+        // instante; el access token ya capturado se envía explícitamente
+        // porque el interceptor de axios ya no lo encontraría en localStorage.
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         setUsuario(null);
+        await AuthService.logout(refresh, access);
     }
 
     function updateUser(usuario: Usuario | null) {
@@ -82,11 +88,15 @@ export function AuthProvider({ children }: Props) {
 
     function hasRole(role: string) {
         if (!usuario) return false;
+        // Administrador: mismo bypass que en el backend (pertenece_a) — ve y
+        // usa todo lo que ya está gateado por rol, sin tocar cada pantalla.
+        if (usuario.groups.includes("Administrador")) return true;
         return usuario.groups.includes(role);
     }
 
     function hasGroup(roles: string[]) {
         if (!usuario) return false;
+        if (usuario.groups.includes("Administrador")) return true;
         return roles.some((r) => usuario.groups.includes(r));
     }
 

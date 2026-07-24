@@ -8,7 +8,7 @@ from ..persona.Persona import Estudiante
 
 class CalificacionFinal(models.Model):
 
-    nota_final = models.DecimalField(max_digits=2,decimal_places=2)
+    nota_final = models.DecimalField(max_digits=4,decimal_places=2)
     aprobado = models.BooleanField(default=False)
     fecha_registro = models.DateField()
 

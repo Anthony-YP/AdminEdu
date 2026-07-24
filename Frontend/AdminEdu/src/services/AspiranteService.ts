@@ -32,6 +32,7 @@ export interface PerfilAspirante {
     last_name: string;
     grupos: string[];
     photo?: string | null;
+    perfil_completo: boolean;
 }
 
 export interface SolicitudMatricula {
@@ -78,6 +79,11 @@ const AspiranteService = {
                 },
             }
         );
+        return data;
+    },
+
+    async completarPerfil(datos: Record<string, unknown>): Promise<any> {
+        const { data } = await api.post("/aspirante/completar-perfil/", datos);
         return data;
     },
 };

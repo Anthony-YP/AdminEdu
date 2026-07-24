@@ -35,3 +35,15 @@ class MeSerializer(serializers.ModelSerializer):
         return list(
             obj.groups.values_list("name", flat=True)
         )
+
+
+class MeUpdateSerializer(serializers.ModelSerializer):
+    """
+    RF03: edición del propio perfil. Solo expone campos de cuenta
+    seguros para que el usuario los edite — nunca is_active, groups
+    ni is_superuser, que son de exclusiva gestión administrativa.
+    """
+
+    class Meta:
+        model = Usuario
+        fields = ["first_name", "last_name", "email"]

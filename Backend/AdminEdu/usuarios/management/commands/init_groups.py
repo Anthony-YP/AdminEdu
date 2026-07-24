@@ -27,6 +27,10 @@ MODELOS_REGISTRABLES = [
 # Definición de grupos y sus permisos
 # add = crear, change = actualizar, delete = eliminar, view = ver
 GRUPOS_CONFIG = {
+    "Administrador": {
+        "permisos": ["add", "change", "delete", "view"],
+        "modelos": "__all__",  # Todos los modelos
+    },
     "Director": {
         "permisos": ["add", "change", "delete", "view"],
         "modelos": "__all__",  # Todos los modelos
@@ -64,7 +68,7 @@ GRUPOS_CONFIG = {
 
 
 class Command(BaseCommand):
-    help = "Crea los grupos (Director, Secretaria, Docente, Estudiante, Representante) y asigna permisos"
+    help = "Crea los grupos (Administrador, Director, Secretaria, Docente, Estudiante, Representante) y asigna permisos"
 
     @transaction.atomic
     def handle(self, *args, **options):

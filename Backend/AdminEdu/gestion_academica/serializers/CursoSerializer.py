@@ -7,7 +7,7 @@ class ParaleloBasicoSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     nombre = serializers.CharField()
     docente_nombre = serializers.SerializerMethodField()
-    dias_clase = serializers.CharField()
+    dias_clase = serializers.ListField(child=serializers.CharField())
     hora_inicio = serializers.TimeField()
     hora_fin = serializers.TimeField()
     cupo_max = serializers.IntegerField()
@@ -63,6 +63,8 @@ class CursoSerializer(serializers.ModelSerializer):
         source="academia.nombre",
         read_only=True
     )
+
+    imagen = serializers.SerializerMethodField()
     paralelos = serializers.SerializerMethodField()
 
     class Meta:
@@ -79,8 +81,23 @@ class CursoSerializer(serializers.ModelSerializer):
             "precio",
             "fecha_inicio",
             "fecha_fin",
+            "estado",
             "paralelos",
         ]
+
+    def get_imagen(self, obj):
+
+        if not obj.imagen:
+            return None
+
+        request = self.context.get("request")
+
+        if request:
+            return request.build_absolute_uri(
+                obj.imagen.url
+            )
+
+        return obj.imagen.url
 
     def get_paralelos(self, obj):
         paralelos = obj.paralelos.all()

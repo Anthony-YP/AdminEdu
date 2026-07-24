@@ -5,12 +5,16 @@ export function getDefaultRoute(
 ): string {
     const groups = usuario.groups || [];
 
-    if (groups.includes("Aspirante")) {
-        return "/aspirante";
+    if (groups.includes("Administrador")) {
+        return "/admin";
     }
 
     if (groups.includes("Estudiante")) {
         return "/estudiante-dashboard";
+    }
+
+    if (groups.includes("Aspirante")) {
+        return "/aspirante";
     }
 
     // Director, Secretaria, Docente, Representante

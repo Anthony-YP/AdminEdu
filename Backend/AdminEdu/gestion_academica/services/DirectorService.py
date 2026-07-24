@@ -1,5 +1,7 @@
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.utils import timezone
 from gestion_academica.models.persona.Persona import Director
 from gestion_academica.services.PersonaService import PersonaService
 from gestion_academica.services.BaseService import BaseService
@@ -74,10 +76,17 @@ class DirectorService(PersonaService, BaseService):
         return True
 
     @staticmethod
+    @transaction.atomic
     def dar_baja_estudiante(
         estudiante,
         motivo
     ):
+        """
+        RF27:
+        Desactiva la cuenta del estudiante (impidiéndole iniciar
+        sesión, ver RF32) dejando registrado el motivo y la fecha
+        de la baja.
+        """
 
         if not motivo or not motivo.strip():
 
@@ -85,8 +94,16 @@ class DirectorService(PersonaService, BaseService):
                 "Debe ingresar el motivo de la baja."
             )
 
-        if hasattr(estudiante, "estado"):
+        if estudiante.usuario is None:
+            raise ValidationError(
+                "El estudiante no tiene una cuenta de usuario asociada."
+            )
 
-            estudiante.estado = "INACTIVO"
+        estudiante.usuario.is_active = False
+        estudiante.usuario.save(update_fields=["is_active"])
 
-        return True
+        estudiante.motivo_baja = motivo.strip()
+        estudiante.fecha_baja = timezone.now().date()
+        estudiante.save(update_fields=["motivo_baja", "fecha_baja"])
+
+        return estudiante

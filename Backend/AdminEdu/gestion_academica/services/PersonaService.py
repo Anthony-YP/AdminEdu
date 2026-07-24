@@ -123,16 +123,18 @@ class PersonaService:
         return True
 
     @staticmethod
-    def es_menor_edad(fecha_nacimiento):
+    def calcular_edad(fecha_nacimiento):
         PersonaService.validar_fecha_nacimiento(fecha_nacimiento)
 
         hoy = date.today()
 
-        edad = hoy.year - fecha_nacimiento.year - (
+        return hoy.year - fecha_nacimiento.year - (
                 (hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day)
         )
 
-        return edad
+    @staticmethod
+    def es_menor_edad(fecha_nacimiento) -> bool:
+        return PersonaService.calcular_edad(fecha_nacimiento) < 18
 
     @staticmethod
     def validar_persona(persona):

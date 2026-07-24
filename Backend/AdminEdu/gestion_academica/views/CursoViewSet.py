@@ -5,11 +5,11 @@ from rest_framework.response import Response
 
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.CursoService import CursoService
-from gestion_academica.api.serializers import CursoSerializer
-from gestion_academica.serializers.CursoSerializer import CursoCreateSerializer
+from gestion_academica.serializers.CursoSerializer import CursoSerializer, CursoCreateSerializer
+from gestion_academica.models.academia.estado_curso import EstadoCurso
 from usuarios.permissions import EsDirector
 
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 class CursoViewSet(
@@ -18,6 +18,7 @@ class CursoViewSet(
     parser_classes = (
         MultiPartParser,
         FormParser,
+        JSONParser,
     )
 
     permission_create = EsDirector
@@ -27,6 +28,11 @@ class CursoViewSet(
     permission_update = EsDirector
 
     permission_delete = EsDirector
+
+    permission_actions = {
+        "estado": EsDirector,
+        "publicos": permissions.AllowAny,
+    }
 
     def get_queryset(self):
 
@@ -48,7 +54,6 @@ class CursoViewSet(
         detail=False,
         methods=["get"],
         url_path="publicos",
-        permission_classes=[permissions.AllowAny],
     )
     def publicos(self, request):
         cursos = CursoService.listar_cursos()
@@ -182,4 +187,34 @@ class CursoViewSet(
 
         return Response(
             status=status.HTTP_204_NO_CONTENT
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="estado",
+    )
+    def estado(self, request, pk=None):
+
+        curso = self.get_object()
+
+        nuevo_estado = request.data.get("estado")
+
+        if not nuevo_estado:
+            return Response(
+                {"detail": "Debe indicar el nuevo estado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            curso = CursoService.cambiar_estado(curso, nuevo_estado)
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            self.get_serializer(curso).data,
+            status=status.HTTP_200_OK,
         )

@@ -1,12 +1,28 @@
 from rest_framework import serializers
 
 from ..models.matricula.Matricula import Matricula
-from ..services.MatriculaService import MatriculaService
 
 
 class MatriculaSerializer(
     serializers.ModelSerializer
 ):
+
+    estudiante_nombre = serializers.SerializerMethodField()
+    estudiante_identificacion = serializers.CharField(
+        source="estudiante.numero_identificacion", read_only=True
+    )
+    curso_nombre = serializers.CharField(
+        source="paralelo_matricula.curso.nombre", read_only=True
+    )
+    paralelo_nombre = serializers.CharField(
+        source="paralelo_matricula.nombre", read_only=True
+    )
+    comprobante_url = serializers.SerializerMethodField()
+    nota_final = serializers.DecimalField(
+        source="calificacion_final.nota_final",
+        max_digits=4, decimal_places=2,
+        read_only=True, default=None,
+    )
 
     class Meta:
 
@@ -15,9 +31,15 @@ class MatriculaSerializer(
         fields = [
             "id",
             "estudiante",
+            "estudiante_nombre",
+            "estudiante_identificacion",
             "paralelo_matricula",
+            "curso_nombre",
+            "paralelo_nombre",
             "comprobante_pago",
+            "comprobante_url",
             "calificacion_final",
+            "nota_final",
             "fecha_solicitud",
             "fecha_aprobacion",
             "estado",
@@ -33,61 +55,15 @@ class MatriculaSerializer(
             "comentario",
         ]
 
+    def get_estudiante_nombre(self, obj):
+        return f"{obj.estudiante.nombres} {obj.estudiante.apellidos}"
 
-class MatriculaCreateSerializer(
-    serializers.ModelSerializer
-):
-
-    class Meta:
-
-        model = Matricula
-
-        fields = [
-            "paralelo_matricula",
-            "comprobante_pago",
-        ]
-
-    def create(
-        self,
-        validated_data
-    ):
-
-        request = self.context.get(
-            "request"
-        )
-
-        if request is None:
-
-            raise serializers.ValidationError(
-                "No se pudo obtener la solicitud actual."
-            )
-
-        usuario = request.user
-
-        try:
-
-            estudiante = (
-                usuario.persona.estudiante
-            )
-
-        except AttributeError:
-
-            raise serializers.ValidationError(
-                "El usuario autenticado no tiene "
-                "un estudiante asociado."
-            )
-
-        return (
-            MatriculaService.solicitar_matricula(
-                estudiante=estudiante,
-                paralelo=validated_data[
-                    "paralelo_matricula"
-                ],
-                comprobante_pago=validated_data[
-                    "comprobante_pago"
-                ]
-            )
-        )
+    def get_comprobante_url(self, obj):
+        if not obj.comprobante_pago or not obj.comprobante_pago.tipo_archivo:
+            return None
+        request = self.context.get("request")
+        url = obj.comprobante_pago.tipo_archivo.url
+        return request.build_absolute_uri(url) if request else url
 
 
 class MatriculaRechazarSerializer(
@@ -101,36 +77,14 @@ class MatriculaRechazarSerializer(
     )
 
 
-class MatriculaManualSerializer(
-    serializers.ModelSerializer
+class MatriculaCancelarSerializer(
+    serializers.Serializer
 ):
 
-    class Meta:
+    comentario = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        trim_whitespace=True
+    )
 
-        model = Matricula
 
-        fields = [
-            "estudiante",
-            "paralelo_matricula",
-            "comprobante_pago",
-        ]
-
-    def create(
-        self,
-        validated_data
-    ):
-
-        return (
-            MatriculaService
-            .crear_matricula_manual(
-                estudiante=validated_data[
-                    "estudiante"
-                ],
-                paralelo=validated_data[
-                    "paralelo_matricula"
-                ],
-                comprobante_pago=validated_data[
-                    "comprobante_pago"
-                ]
-            )
-        )

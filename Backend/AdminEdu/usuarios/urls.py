@@ -1,12 +1,18 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
 from usuarios.views.google_auth_view import GoogleAuthView
 
 from .views import (
     LoginView,
+    LogoutView,
     UserViewSet,
     GroupViewSet,
     MeView,
+)
+from .views.password_reset_view import (
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 
 from .views_oauth import google_login, google_callback_process
@@ -31,6 +37,30 @@ urlpatterns = [
         "login",
         LoginView.as_view(),
         name="login",
+    ),
+
+    path(
+        "logout",
+        LogoutView.as_view(),
+        name="logout",
+    ),
+
+    path(
+        "token/refresh/",
+        TokenRefreshView.as_view(),
+        name="token-refresh",
+    ),
+
+    path(
+        "password-reset/request/",
+        PasswordResetRequestView.as_view(),
+        name="password-reset-request",
+    ),
+
+    path(
+        "password-reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="password-reset-confirm",
     ),
 
     path(

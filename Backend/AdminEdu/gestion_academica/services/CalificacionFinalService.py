@@ -135,8 +135,7 @@ class CalificacionFinalService:
         )
 
         MatriculaService.culminar_matricula(
-            matricula=matricula,
-            aprobado=aprobado
+            matricula
         )
 
         return calificacion
@@ -188,19 +187,6 @@ class CalificacionFinalService:
             update_fields=[
                 "nota_final",
                 "aprobado"
-            ]
-        )
-
-        matricula.estado = (
-            EstadoMatricula.CURSO_APROBADO
-            if aprobado
-            else
-            EstadoMatricula.CURSO_REPROBADO
-        )
-
-        matricula.save(
-            update_fields=[
-                "estado"
             ]
         )
 

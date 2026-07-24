@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const TIPOS_ERROR = {
@@ -62,10 +62,16 @@ export default function Login() {
     useEffect(() => {
         if (isAuthenticated && usuario) {
             const grupos = usuario.groups || [];
-            if (grupos.includes("Aspirante")) {
-                navigate("/aspirante", { replace: true });
+            // "Estudiante" tiene prioridad sobre "Aspirante": un usuario que ya
+            // completó su perfil conserva el grupo Aspirante, pero su portal
+            // principal pasa a ser el de Estudiante (que también puede
+            // explorar/solicitar cursos nuevos).
+            if (grupos.includes("Administrador")) {
+                navigate("/admin", { replace: true });
             } else if (grupos.includes("Estudiante")) {
                 navigate("/estudiante-dashboard", { replace: true });
+            } else if (grupos.includes("Aspirante")) {
+                navigate("/aspirante", { replace: true });
             } else {
                 // Director, Secretaria, Docente, Representante → dashboard general
                 navigate("/dashboard", { replace: true });
@@ -231,6 +237,12 @@ export default function Login() {
                                         </svg>
                                     </button>
                                 </div>
+                            </div>
+
+                            <div className="text-right -mt-2">
+                                <Link to="/recuperar-contrasena" className="text-xs text-blue-300 hover:text-blue-200 transition-colors">
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
                             </div>
 
                             {error.mensaje && (
