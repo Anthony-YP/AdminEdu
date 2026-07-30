@@ -18,11 +18,6 @@ from gestion_academica.models.notificaciones.Notificacion import Notificacion
 
 
 def _notificar_docente_asignado(paralelo):
-    """
-    RF28: notifica al docente cuando se le asigna un paralelo.
-    Si el docente no tiene una cuenta de usuario asociada, no hay
-    a quién notificar y se omite en silencio.
-    """
 
     if paralelo.docente is None or paralelo.docente.usuario is None:
         return
@@ -37,20 +32,12 @@ def _notificar_docente_asignado(paralelo):
 
 
 class ParaleloService:
-    """
-    Contiene las reglas de negocio relacionadas
-    con los paralelos.
-    """
 
     @staticmethod
     def validar_horario(
         hora_inicio: time,
         hora_fin: time
     ):
-        """
-        La hora de inicio debe ser anterior
-        a la hora de finalización.
-        """
 
         if hora_inicio >= hora_fin:
             raise ValidationError(
@@ -62,9 +49,6 @@ class ParaleloService:
     def validar_cupo(
         cupo_max: int
     ):
-        """
-        El cupo máximo debe ser mayor que cero.
-        """
 
         if cupo_max <= 0:
             raise ValidationError(
@@ -97,10 +81,6 @@ class ParaleloService:
 
     @staticmethod
     def validar_dias_clase(dias_clase):
-        """
-        Los días de clase deben ser una lista no vacía
-        (ej. ["Lunes", "Miércoles"]).
-        """
 
         if not dias_clase or not isinstance(dias_clase, list):
             raise ValidationError(
@@ -119,11 +99,6 @@ class ParaleloService:
         hora_fin: time,
         cupo_max: int
     ) -> Paralelo:
-        """
-        Crea un paralelo aplicando las reglas
-        de negocio. El docente es opcional: un paralelo
-        puede crearse sin asignar docente todavía.
-        """
 
         if curso is None:
             raise ValidationError(
@@ -186,10 +161,6 @@ class ParaleloService:
         hora_fin: time,
         cupo_max: int
     ) -> Paralelo:
-        """
-        Actualiza los datos operativos de un paralelo (no su estado,
-        que se gestiona con `cambiar_estado`).
-        """
 
         if paralelo is None:
             raise ValidationError(
@@ -252,10 +223,6 @@ class ParaleloService:
     @staticmethod
     @transaction.atomic
     def cambiar_estado(paralelo: Paralelo, nuevo_estado: str) -> Paralelo:
-        """
-        RF19/RF22:
-        Cambia el estado de un paralelo (ACTIVO, DESACTIVADO).
-        """
 
         if paralelo is None:
             raise ValidationError(
@@ -283,11 +250,7 @@ class ParaleloService:
     def eliminar_paralelo(
         paralelo: Paralelo
     ):
-        """
-        Da de baja lógica a un paralelo (lo desactiva) en vez de
-        borrarlo físicamente, para preservar el historial de
-        matrículas, asistencia y calificaciones asociado.
-        """
+
 
         if paralelo is None:
             raise ValidationError(

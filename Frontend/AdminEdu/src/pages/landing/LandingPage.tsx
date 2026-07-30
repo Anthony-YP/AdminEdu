@@ -196,7 +196,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-3 gap-8 relative">
                         <div className="hidden md:block absolute top-14 left-[20%] right-[20%] h-px bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200" />
                         {[
-                            { step: "1", title: "Ingresa con Google", desc: "Continúa con tu cuenta de Google para registrarte como aspirante, sin formularios largos." },
+                            { step: "1", title: "Ingresa con Google", desc: "Continúa con tu cuenta de Google para registrarte, sin formularios largos." },
                             { step: "2", title: "Explora cursos", desc: "Navega por la oferta académica disponible y elige el curso que mejor se adapte a ti." },
                             { step: "3", title: "Solicita matrícula", desc: "Envía tu solicitud en línea y recibe notificación cuando sea aprobada." },
                         ].map((s, i) => (
@@ -217,11 +217,8 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-14">
                         <span className="text-blue-600 text-sm font-semibold uppercase tracking-wider">Oferta Académica</span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-3">
-                            Cursos Disponibles
-                        </h2>
                         <p className="text-slate-500 mt-3 max-w-2xl mx-auto">
-                            Cursos actualmente habilitados para matrícula en {nombreAcademia}.
+                            Cursos disponibles para solicitar matrícula en {nombreAcademia}.
                         </p>
                     </div>
 
@@ -358,7 +355,7 @@ export default function LandingPage() {
                 <div className="border-t border-slate-800">
                     <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <p className="text-xs text-slate-500">
-                            &copy; {new Date().getFullYear()} {nombreAcademia}. Todos los derechos reservados.
+                            &copy; {new Date().getFullYear()} AdminEdu. Todos los derechos reservados.
                         </p>
                         <p className="text-xs text-slate-600">
                             Sistema de gestión académica AdminEdu

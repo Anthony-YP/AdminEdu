@@ -13,10 +13,6 @@ export function getDefaultRoute(
         return "/estudiante-dashboard";
     }
 
-    if (groups.includes("Aspirante")) {
-        return "/aspirante";
-    }
-
     // Director, Secretaria, Docente, Representante
     return "/dashboard";
 }

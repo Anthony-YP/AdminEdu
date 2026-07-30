@@ -10,10 +10,10 @@
     },
     {
       "name": "backend",
-      "runtimeExecutable": "../../.venv/Scripts/python.exe",
+      "runtimeExecutable": "../.venv/Scripts/python.exe",
       "runtimeArgs": ["manage.py", "runserver", "8000"],
       "port": 8000,
-      "cwd": "Backend/AdminEdu/AdminEdu"
+      "cwd": "Backend/AdminEdu"
     }
   ]
 }

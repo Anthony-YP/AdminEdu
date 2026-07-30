@@ -191,19 +191,3 @@ class CalificacionFinalService:
         )
 
         return calificacion
-
-    @staticmethod
-    def obtener_calificacion(
-        matricula
-    ):
-
-        if not matricula.calificacion_final:
-
-            raise ValidationError(
-                "La matrícula no tiene una "
-                "calificación final registrada."
-            )
-
-        return (
-            matricula.calificacion_final
-        )

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import AspiranteService from "../services/AspiranteService";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import CursoMatriculaService from "../services/CursoMatriculaService";
 
 export default function EstudianteDetalleCurso() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [curso, setCurso] = useState(null);
     const [loading, setLoading] = useState(true);
     const [solicitando, setSolicitando] = useState(false);
@@ -21,7 +22,7 @@ export default function EstudianteDetalleCurso() {
     useEffect(() => {
         async function load() {
             try {
-                const data = await AspiranteService.getCurso(Number(id));
+                const data = await CursoMatriculaService.getCurso(Number(id));
                 setCurso(data);
             } catch {
                 setError("No se pudo cargar el curso.");
@@ -51,7 +52,7 @@ export default function EstudianteDetalleCurso() {
             setError("Debe seleccionar un paralelo.");
             return;
         }
-        if (!comprobante) {
+        if (tipoPago !== "EFECTIVO" && !comprobante) {
             setError("Debe adjuntar el comprobante de pago.");
             return;
         }
@@ -70,15 +71,19 @@ export default function EstudianteDetalleCurso() {
         try {
             const formData = new FormData();
             formData.append("paralelo_id", String(paraleloId));
-            formData.append("comprobante", comprobante);
+            if (comprobante) formData.append("comprobante", comprobante);
             formData.append("tipo_pago", tipoPago);
             formData.append("monto", monto);
             formData.append("numero_ref", numeroRef);
             formData.append("comentario", comentario);
 
-            await AspiranteService.solicitarMatricula(formData);
+            await CursoMatriculaService.solicitarMatricula(formData);
             setExito(true);
         } catch (err) {
+            if (err.response?.data?.codigo === "PERFIL_INCOMPLETO") {
+                navigate("/estudiante-perfil");
+                return;
+            }
             setError(err.response?.data?.detail || "Error al enviar la solicitud.");
         } finally {
             setSolicitando(false);
@@ -114,6 +119,11 @@ export default function EstudianteDetalleCurso() {
                 <p className="text-gray-500 mb-6">
                     Tu solicitud de matrícula para <strong>{curso?.nombre}</strong> fue enviada correctamente.
                 </p>
+                {tipoPago === "EFECTIVO" && (
+                    <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-xl text-sm mb-6 text-left">
+                        Debe acercarse a la institución a cancelar el valor de la matrícula en un máximo de 3 días laborables.
+                    </div>
+                )}
                 <Link to="/estudiante-matriculas" className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors">
                     Ver Mis Matrículas
                 </Link>
@@ -193,28 +203,32 @@ export default function EstudianteDetalleCurso() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Monto ($)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Monto ($)<span className="text-red-500 ml-0.5">*</span></label>
                         <input
                             type="number" step="0.01" min="0" placeholder="0.00"
                             value={monto} onChange={(e) => setMonto(e.target.value)}
                             className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                            required
                         />
                     </div>
                     {tipoPago === "TRANSFERENCIA" && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Número de Referencia</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Número de Referencia<span className="text-red-500 ml-0.5">*</span></label>
                             <input
                                 type="text" value={numeroRef} onChange={(e) => setNumeroRef(e.target.value)}
                                 className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                required
                             />
                         </div>
                     )}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Comprobante de Pago</label>
-                        <p className="text-xs text-gray-400 mb-2">Formatos aceptados: PDF, PNG</p>
-                        <input type="file" accept=".pdf,.png,application/pdf,image/png" onChange={handleFileChange} className="text-sm" />
-                        {comprobante && <p className="text-xs text-emerald-600 mt-1">Archivo: {comprobante.name}</p>}
-                    </div>
+                    {tipoPago !== "EFECTIVO" && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Comprobante de Pago<span className="text-red-500 ml-0.5">*</span></label>
+                            <p className="text-xs text-gray-400 mb-2">Formatos aceptados: PDF, PNG</p>
+                            <input type="file" accept=".pdf,.png,application/pdf,image/png" onChange={handleFileChange} className="text-sm" />
+                            {comprobante && <p className="text-xs text-emerald-600 mt-1">Archivo: {comprobante.name}</p>}
+                        </div>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">Comentario (opcional)</label>
                         <textarea

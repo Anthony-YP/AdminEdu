@@ -1,5 +1,3 @@
-from rest_framework import permissions
-
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.SecretariaService import SecretariaService
 from gestion_academica.serializers.SecretariaSerializer import SecretariaSerializer, SecretariaCreateSerializer
@@ -9,7 +7,7 @@ from usuarios.permissions import EsAdministrativo
 class SecretariaViewSet(PermisosViewSet):
 
     permission_create = EsAdministrativo
-    permission_read = permissions.IsAuthenticated
+    permission_read = EsAdministrativo
     permission_update = EsAdministrativo
     permission_delete = EsAdministrativo
 

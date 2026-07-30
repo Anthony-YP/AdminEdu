@@ -21,16 +21,15 @@ export default function Forbidden() {
 
         <div className="min-h-screen flex flex-col items-center justify-center">
 
-            <h1 className="text-4xl font-bold">
-
-                403
+            <h1 className="text-4xl font-bold text-red-600">
+                ¡Accesso Denegado!
 
             </h1>
 
             <p className="mt-4 text-gray-600 text-center max-w-sm px-4">
 
                 No tienes permisos para acceder a esta página.
-                {isAuthenticated && " Si crees que esto es un error, contacta al administrador; también puedes cerrar sesión e intentar con otra cuenta."}
+                {isAuthenticated && " Si crees que es un error, contacta al administrador del sistema. También puedes cerrar sesión e intentar con otra cuenta que cuente con los permisos necesarios."}
 
             </p>
 

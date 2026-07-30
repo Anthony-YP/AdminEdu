@@ -15,6 +15,8 @@ class ComprobantePago(models.Model):
     tipo_archivo = models.FileField(
         upload_to="comprobantes/",
         validators=[FileExtensionValidator(allowed_extensions=["pdf", "png"])],
+        blank=True,
+        null=True,
     )
     monto = models.DecimalField(max_digits=8,decimal_places=2)
     fecha = models.DateField()
@@ -46,6 +48,14 @@ class ComprobantePago(models.Model):
         ):
             raise ValidationError(
                 "El pago con transferencia debe tener un número de referencia."
+            )
+
+        if (
+            self.tipo_pago != TipoPago.EFECTIVO
+            and not self.tipo_archivo
+        ):
+            raise ValidationError(
+                "Debe adjuntar el comprobante de pago para este método de pago."
             )
     def __str__(self):
         return (

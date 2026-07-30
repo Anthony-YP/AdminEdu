@@ -73,18 +73,3 @@ class UserSerializer(serializers.ModelSerializer):
             usuario.save(update_fields=["password"])
 
         return usuario
-
-
-class MeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-
-        model = User
-
-        fields = [
-            "id",
-            "username",
-            "email",
-            "first_name",
-            "last_name",
-        ]

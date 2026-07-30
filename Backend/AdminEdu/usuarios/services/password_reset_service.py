@@ -10,20 +10,9 @@ _token_generator = PasswordResetTokenGenerator()
 
 
 class PasswordResetService:
-    """
-    RF02: recuperación de contraseña mediante número de identificación
-    y correo electrónico.
-    """
 
     @staticmethod
     def solicitar_reset(numero_identificacion, correo):
-        """
-        Si existe una Persona cuyo número de identificación y correo
-        coinciden y tiene una cuenta de usuario asociada, le envía un
-        enlace de restablecimiento. No revela si los datos existen o
-        no en la respuesta (evita enumeración de usuarios) — el
-        llamador siempre debe mostrar un mensaje genérico.
-        """
 
         from gestion_academica.models.persona.Persona import Persona
 

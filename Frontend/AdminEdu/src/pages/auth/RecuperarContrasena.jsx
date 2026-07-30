@@ -47,17 +47,18 @@ export default function RecuperarContrasena() {
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">Número de identificación</label>
+                            <label className="block text-sm font-medium text-white/70 mb-1.5">Número de identificación<span className="text-red-500 ml-0.5">*</span></label>
                             <input
                                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/30"
                                 value={numeroIdentificacion}
                                 onChange={(e) => setNumeroIdentificacion(e.target.value)}
                                 placeholder="Cédula o pasaporte"
                                 disabled={loading}
+                                required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">Correo electrónico</label>
+                            <label className="block text-sm font-medium text-white/70 mb-1.5">Correo electrónico<span className="text-red-500 ml-0.5">*</span></label>
                             <input
                                 type="email"
                                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/30"
@@ -65,6 +66,7 @@ export default function RecuperarContrasena() {
                                 onChange={(e) => setCorreo(e.target.value)}
                                 placeholder="correo@ejemplo.com"
                                 disabled={loading}
+                                required
                             />
                         </div>
 

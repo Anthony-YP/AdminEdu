@@ -10,14 +10,14 @@ from gestion_academica.serializers.CalificacionFinalSerializer import (
     CalificacionFinalActualizarSerializer,
 )
 from gestion_academica.services.CalificacionFinalService import CalificacionFinalService
-from usuarios.permissions import EsDocente, EsAdministrativo
+from usuarios.permissions import EsDocente, EsAdministrativo, EsPersonalInstitucion
 
 
 class CalificacionFinalViewSet(PermisosViewSet):
 
     serializer_class = CalificacionFinalSerializer
 
-    permission_read = EsAdministrativo
+    permission_read = EsPersonalInstitucion
     permission_create = EsDocente
     permission_update = EsDocente
     permission_delete = EsAdministrativo

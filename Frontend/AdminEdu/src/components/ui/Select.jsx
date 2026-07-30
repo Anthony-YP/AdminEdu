@@ -1,30 +1,33 @@
 import React from 'react';
 
-export function Select({ 
-    label, 
-    error, 
-    id, 
-    options = [], 
-    className = '', 
+export function Select({
+    label,
+    error,
+    id,
+    options = [],
+    className = '',
     fullWidth = true,
+    required = false,
     placeholder = "Seleccionar opción...",
-    ...props 
+    ...props
 }) {
     const selectId = id || Math.random().toString(36).substring(7);
-    
+
     return (
         <div className={`${fullWidth ? 'w-full' : ''} ${className}`}>
             {label && (
                 <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-1.5">
                     {label}
+                    {required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
             )}
             <div className="relative">
                 <select
                     id={selectId}
+                    required={required}
                     className={`block w-full pl-3 pr-10 py-2 border rounded-lg text-sm transition duration-150 ease-in-out appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:bg-gray-50 disabled:text-gray-500
-                        ${error 
-                            ? 'border-red-300 text-red-900 focus:border-red-500 focus:ring-red-500' 
+                        ${error
+                            ? 'border-red-300 text-red-900 focus:border-red-500 focus:ring-red-500'
                             : 'border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-500'
                         }
                     `}

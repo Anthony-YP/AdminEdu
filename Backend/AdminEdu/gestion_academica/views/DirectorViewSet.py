@@ -1,5 +1,3 @@
-from rest_framework import permissions
-
 from gestion_academica.views.CoreViewSet import PermisosViewSet
 from gestion_academica.services.DirectorService import DirectorService
 
@@ -10,7 +8,7 @@ from usuarios.permissions import EsDirector
 class DirectorViewSet(PermisosViewSet):
 
     permission_create = EsDirector
-    permission_read = permissions.IsAuthenticated
+    permission_read = EsDirector
     permission_update = EsDirector
     permission_delete = EsDirector
 

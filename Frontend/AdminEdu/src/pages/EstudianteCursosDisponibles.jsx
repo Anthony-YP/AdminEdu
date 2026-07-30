@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import AspiranteService from "../services/AspiranteService";
+import CursoMatriculaService from "../services/CursoMatriculaService";
 
 export default function EstudianteCursosDisponibles() {
     const [cursos, setCursos] = useState([]);
@@ -11,7 +11,7 @@ export default function EstudianteCursosDisponibles() {
     useEffect(() => {
         async function load() {
             try {
-                const data = await AspiranteService.getCursos();
+                const data = await CursoMatriculaService.getCursos();
                 setCursos(data);
             } catch {
             } finally {

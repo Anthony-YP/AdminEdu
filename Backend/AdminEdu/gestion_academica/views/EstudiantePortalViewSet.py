@@ -7,20 +7,16 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from gestion_academica.models.academia.Academia import Curso, Paralelo
+from gestion_academica.models.academia.Academia import Paralelo
 from gestion_academica.models.persona.Persona import Persona, Estudiante
 from gestion_academica.models.core.Core import Direccion
 from gestion_academica.models.pagos.Pagos import ComprobantePago
-from gestion_academica.models.matricula.Matricula import Matricula
-from gestion_academica.models.matricula.estado_matricula import EstadoMatricula
 
 from gestion_academica.services.MatriculaService import MatriculaService
 from gestion_academica.services.PersonaService import PersonaService
 from gestion_academica.services.RepresentanteService import RepresentanteService
 from gestion_academica.serializers.DireccionSerializer import DireccionSerializer
-from usuarios.models import GRUPO_ESTUDIANTE
 from usuarios.permissions import EsEstudiante
-from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 
@@ -72,7 +68,7 @@ class EstudianteHistorialView(APIView):
 
 class PerfilCompletadoView(APIView):
     """
-    RF04: tras registrarse/iniciar sesión con Google, el aspirante
+    RF04: tras registrarse/iniciar sesión con Google, el estudiante
     completa su perfil con datos personales reales (no fabricados)
     antes de poder solicitar una matrícula. Si es menor de edad,
     también debe registrar a su representante legal (RF11).
@@ -85,11 +81,7 @@ class PerfilCompletadoView(APIView):
         user = request.user
         grupos = list(user.groups.values_list("name", flat=True))
 
-        # Aspirante: aún solicitando su primera matrícula. Estudiante: entró
-        # con Google y ya tiene el rol de estudiante, pero todavía no tiene
-        # datos personales registrados (Persona) — también debe poder
-        # completarlos.
-        if "Aspirante" not in grupos and "Estudiante" not in grupos:
+        if "Estudiante" not in grupos:
             return Response(
                 {"detail": "No tienes permiso para completar este perfil."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -171,100 +163,14 @@ class PerfilCompletadoView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        estudiante_group, _ = Group.objects.get_or_create(name=GRUPO_ESTUDIANTE)
-        user.groups.add(estudiante_group)
-
         return Response(
             {"detail": "Perfil completado correctamente.", "estudiante_id": estudiante.pk},
             status=status.HTTP_201_CREATED,
         )
 
 
-class AspirantePerfilView(APIView):
-    """Perfil del aspirante autenticado."""
-
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        grupos = list(user.groups.values_list("name", flat=True))
-
-        if "Aspirante" not in grupos:
-            return Response(
-                {"detail": "No eres un aspirante."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        from allauth.socialaccount.models import SocialAccount
-        photo = None
-        try:
-            social = SocialAccount.objects.get(user=user)
-            photo = social.extra_data.get("picture")
-        except SocialAccount.DoesNotExist:
-            pass
-
-        return Response({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "grupos": grupos,
-            "photo": photo,
-            "perfil_completo": Persona.objects.filter(usuario=user).exists(),
-        })
-
-
-class AspiranteSolicitudesView(APIView):
-    """Solicitudes de matrícula del aspirante."""
-
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        grupos = list(user.groups.values_list("name", flat=True))
-
-        if "Aspirante" not in grupos:
-            return Response(
-                {"detail": "No eres un aspirante."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        try:
-            persona = Persona.objects.get(usuario=user)
-            estudiante = Estudiante.objects.get(persona_ptr=persona)
-        except (Persona.DoesNotExist, Estudiante.DoesNotExist):
-            return Response([], status=status.HTTP_200_OK)
-
-        matriculas = Matricula.objects.filter(
-            estudiante=estudiante
-        ).select_related(
-            "paralelo_matricula",
-            "paralelo_matricula__curso",
-            "comprobante_pago",
-        ).order_by("-fecha_solicitud")
-
-        resultado = []
-        for m in matriculas:
-            curso = m.paralelo_matricula.curso
-            resultado.append({
-                "id": m.id,
-                "curso": curso.id,
-                "curso_nombre": curso.nombre,
-                "paralelo": m.paralelo_matricula.nombre,
-                "paralelo_id": m.paralelo_matricula.id,
-                "estado": m.estado,
-                "fecha_solicitud": m.fecha_solicitud.isoformat() if m.fecha_solicitud else None,
-                "fecha_aprobacion": m.fecha_aprobacion.isoformat() if m.fecha_aprobacion else None,
-                "comentario": m.comentario or "",
-                "comprobante_url": m.comprobante_pago.tipo_archivo.url if m.comprobante_pago and m.comprobante_pago.tipo_archivo else None,
-            })
-
-        return Response(resultado, status=status.HTTP_200_OK)
-
-
-class AspiranteMatriculaView(APIView):
-    """Permite a un aspirante o estudiante solicitar matrícula con comprobante de pago."""
+class SolicitarMatriculaView(APIView):
+    """Permite a un estudiante solicitar matrícula con comprobante de pago."""
 
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -274,10 +180,7 @@ class AspiranteMatriculaView(APIView):
         user = request.user
         grupos = list(user.groups.values_list("name", flat=True))
 
-        # Aspirante: solicitando su primera matrícula. Estudiante: entró con
-        # Google (ya tiene el rol de estudiante) y solicita una matrícula
-        # adicional desde el portal de estudiante.
-        if "Aspirante" not in grupos and "Estudiante" not in grupos:
+        if "Estudiante" not in grupos:
             return Response(
                 {"detail": "No tienes permiso para solicitar una matrícula."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -296,25 +199,28 @@ class AspiranteMatriculaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not comprobante:
-            return Response(
-                {"detail": "Debe adjuntar el comprobante de pago."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if tipo_pago != "EFECTIVO":
+            if not comprobante:
+                return Response(
+                    {"detail": "Debe adjuntar el comprobante de pago."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        nombre_archivo = getattr(comprobante, "name", "") or ""
-        if not nombre_archivo.lower().endswith((".pdf", ".png")):
-            return Response(
-                {"detail": "El comprobante debe ser un archivo PDF o PNG."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            nombre_archivo = getattr(comprobante, "name", "") or ""
+            if not nombre_archivo.lower().endswith((".pdf", ".png")):
+                return Response(
+                    {"detail": "El comprobante debe ser un archivo PDF o PNG."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        tamano_maximo = 5 * 1024 * 1024  # 5 MB
-        if getattr(comprobante, "size", 0) > tamano_maximo:
-            return Response(
-                {"detail": "El comprobante no puede superar los 5 MB."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            tamano_maximo = 5 * 1024 * 1024  # 5 MB
+            if getattr(comprobante, "size", 0) > tamano_maximo:
+                return Response(
+                    {"detail": "El comprobante no puede superar los 5 MB."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            comprobante = None
 
         try:
             paralelo = Paralelo.objects.get(id=paralelo_id)
@@ -380,4 +286,3 @@ class AspiranteMatriculaView(APIView):
             "curso_nombre": paralelo.curso.nombre,
             "paralelo_nombre": paralelo.nombre,
         }, status=status.HTTP_201_CREATED)
-

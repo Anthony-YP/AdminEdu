@@ -17,7 +17,7 @@ class CalificacionFinal(models.Model):
         verbose_name = "calificacion final"
         verbose_name_plural = "calificaciones finales"
 
-    def _str_(self):
+    def __str__(self):
         return (
             f"{self.nota_final}"
         )
@@ -67,12 +67,13 @@ class Matricula(models.Model):
         verbose_name = "matricula"
         verbose_name_plural = "Matriculas"
 
-    def _str_(self):
+    def __str__(self):
+        nota = self.calificacion_final.nota_final if self.calificacion_final else "—"
         return (
-            f"{self.estudiante.persona.nombre + self.estudiante.persona.apellido} | "
+            f"{self.estudiante.nombres} {self.estudiante.apellidos} | "
             f"{self.estado} | "
-            f"{self.fecha_solicitud} |" 
-            f"{self.calificacion_final.CalificacionFinal.nota_final} |"
+            f"{self.fecha_solicitud} | "
+            f"{nota}"
         )
 class Asistencia(models.Model):
 
@@ -85,7 +86,7 @@ class Asistencia(models.Model):
     fecha = models.DateField()
     presente = models.BooleanField(default=False)
 
-    def _str_(self):
+    def __str__(self):
         return (
             f"{'Presente' if self.presente else 'Ausente'}"
         )

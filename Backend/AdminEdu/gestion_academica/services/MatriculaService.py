@@ -8,11 +8,6 @@ from ..models.notificaciones.Notificacion import Notificacion
 
 
 def _notificar_estudiante(matricula, mensaje):
-    """
-    RF28: notifica al estudiante sobre un cambio de estado de su
-    matrícula. Si el estudiante no tiene una cuenta de usuario
-    asociada, no hay a quién notificar y se omite en silencio.
-    """
 
     usuario = matricula.estudiante.usuario
 
@@ -26,12 +21,6 @@ class MatriculaService:
 
     @staticmethod
     def validar_paralelo_activo(paralelo):
-        """
-        Valida que el paralelo se encuentre activo.
-
-        Un estudiante no puede solicitar una matrícula
-        en un paralelo inactivo.
-        """
 
         if paralelo.estado != "ACTIVO":
 
@@ -42,13 +31,6 @@ class MatriculaService:
 
     @staticmethod
     def validar_cupo(paralelo):
-        """
-        RF29:
-        Valida que el paralelo tenga cupos disponibles.
-
-        Las matrículas pendientes y aprobadas ocupan cupo.
-        Las matrículas rechazadas no ocupan cupo.
-        """
 
         matriculas_ocupando_cupo = Matricula.objects.filter(
             paralelo_matricula=paralelo,
@@ -69,13 +51,6 @@ class MatriculaService:
         estudiante,
         paralelo
     ):
-        """
-        RF30:
-        Evita que un estudiante tenga más de una matrícula
-        en el mismo curso.
-
-        Las matrículas rechazadas no se consideran activas.
-        """
 
         curso = paralelo.curso
 
@@ -100,13 +75,6 @@ class MatriculaService:
         paralelo,
         comprobante_pago
     ):
-        """
-        RF10:
-        Permite al estudiante solicitar una matrícula.
-
-        RF12:
-        La solicitud debe incluir un comprobante de pago.
-        """
 
         if comprobante_pago is None:
 
@@ -141,13 +109,6 @@ class MatriculaService:
     @staticmethod
     @transaction.atomic
     def aprobar_matricula(matricula):
-        """
-        RF15:
-        Permite aprobar una matrícula pendiente.
-
-        RF17:
-        Cambia el estado de la matrícula a APROBADA.
-        """
 
         if matricula.estado != EstadoMatricula.PENDIENTE:
 
@@ -184,13 +145,6 @@ class MatriculaService:
     @staticmethod
     @transaction.atomic
     def rechazar_matricula(matricula, comentario):
-        """
-        RF15:
-        Rechaza una matrícula pendiente.
-
-        La razón del rechazo debe manejarse mediante
-        el serializer o un campo específico del modelo.
-        """
 
         if matricula.estado != EstadoMatricula.PENDIENTE:
 
@@ -223,11 +177,6 @@ class MatriculaService:
     @staticmethod
     @transaction.atomic
     def cancelar_matricula(matricula, comentario):
-        """
-        RF15/RF17:
-        Cancela una matrícula pendiente o aprobada (antes de finalizar
-        el curso), dejando registrado el motivo de la cancelación.
-        """
 
         if matricula.estado not in (
             EstadoMatricula.PENDIENTE,
@@ -265,12 +214,6 @@ class MatriculaService:
         numero_ref,
         comprobante_archivo=None,
     ):
-        """
-        Permite al estudiante reenviar una matrícula que fue rechazada,
-        opcionalmente cambiando de paralelo y/o reemplazando el
-        comprobante de pago. Vuelve a quedar como PENDIENTE para que
-        secretaría la revise de nuevo.
-        """
 
         if matricula.estado != EstadoMatricula.RECHAZADA:
             raise ValidationError(
@@ -309,13 +252,6 @@ class MatriculaService:
         paralelo,
         comprobante_pago
     ):
-        """
-        RF16:
-        Permite a la secretaria registrar manualmente
-        una matrícula en casos excepcionales.
-
-        La matrícula se crea directamente como APROBADA.
-        """
 
         if comprobante_pago is None:
 
@@ -351,14 +287,6 @@ class MatriculaService:
 
     @staticmethod
     def listar_pendientes():
-        """
-        RF13:
-        Obtiene las solicitudes de matrícula pendientes.
-
-        RF14:
-        Permite acceder a la información del comprobante
-        de pago asociado.
-        """
 
         return Matricula.objects.filter(
             estado=EstadoMatricula.PENDIENTE
@@ -375,13 +303,6 @@ class MatriculaService:
     def listar_matriculas_estudiante(
         estudiante
     ):
-        """
-        Permite obtener el historial de matrículas
-        de un estudiante.
-
-        RF09:
-        Historial académico del estudiante.
-        """
 
         return Matricula.objects.filter(
             estudiante=estudiante
@@ -397,12 +318,6 @@ class MatriculaService:
 
     @staticmethod
     def calcular_porcentaje_asistencia(matricula):
-        """
-        RF09:
-        Calcula el porcentaje de asistencia de un estudiante
-        en la matrícula (sesiones marcadas como presente sobre
-        el total de sesiones registradas).
-        """
 
         total = matricula.asistencias.count()
 
@@ -417,10 +332,6 @@ class MatriculaService:
     def listar_matriculas_paralelo(
         paralelo
     ):
-        """
-        Obtiene los estudiantes matriculados (aprobados o ya finalizados)
-        en un paralelo, para pase de lista y registro de calificaciones.
-        """
 
         return Matricula.objects.filter(
             paralelo_matricula=paralelo,
@@ -434,11 +345,6 @@ class MatriculaService:
     @staticmethod
     @transaction.atomic
     def culminar_matricula(matricula):
-        """
-        RF17:
-        Actualiza el estado académico de una matrícula
-        previamente aprobada.
-        """
 
         if matricula.estado != (
                 EstadoMatricula.APROBADA

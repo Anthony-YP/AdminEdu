@@ -25,7 +25,11 @@ const FORM_VACIO = {
     direccion: { ciudad: "", calle_principal: "", calle_secundaria: "", numero_casa: "", referencia: "" },
 };
 
-const CUENTA_VACIA = { username: "", password: "" };
+const CUENTA_VACIA = { username: "", password: "", confirmPassword: "" };
+
+// Letras, números y los símbolos más comunes; sin espacios ni caracteres raros.
+const PASSWORD_REGEX = /^[A-Za-z0-9!@#$%^&*_\-.,]+$/;
+const PASSWORD_HINT = "Mínimo 8 caracteres. Se permiten letras, números y los símbolos ! @ # $ % ^ & * _ - . , (sin espacios).";
 
 export default function GestionPersonal() {
     const [tipo, setTipo] = useState("Docente");
@@ -143,6 +147,14 @@ export default function GestionPersonal() {
             }
             if (cuenta.password.length < 8) {
                 setFormError("La contraseña debe tener al menos 8 caracteres.");
+                return;
+            }
+            if (!PASSWORD_REGEX.test(cuenta.password)) {
+                setFormError(`La contraseña contiene caracteres no permitidos. ${PASSWORD_HINT}`);
+                return;
+            }
+            if (cuenta.password !== cuenta.confirmPassword) {
+                setFormError("Las contraseñas no coinciden.");
                 return;
             }
         }
@@ -345,18 +357,26 @@ export default function GestionPersonal() {
                             {!editId && (
                                 <div className="border-b pb-4">
                                     <p className="text-sm font-semibold text-gray-700 mb-2">Cuenta de acceso</p>
+                                    <Input
+                                        label="Usuario"
+                                        value={cuenta.username}
+                                        onChange={(e) => setCuenta((c) => ({ ...c, username: e.target.value }))}
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1.5 mb-3">{PASSWORD_HINT}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <Input
-                                            label="Usuario"
-                                            value={cuenta.username}
-                                            onChange={(e) => setCuenta((c) => ({ ...c, username: e.target.value }))}
-                                            required
-                                        />
                                         <Input
                                             label="Contraseña"
                                             type="password"
                                             value={cuenta.password}
                                             onChange={(e) => setCuenta((c) => ({ ...c, password: e.target.value }))}
+                                            required
+                                        />
+                                        <Input
+                                            label="Confirmar contraseña"
+                                            type="password"
+                                            value={cuenta.confirmPassword}
+                                            onChange={(e) => setCuenta((c) => ({ ...c, confirmPassword: e.target.value }))}
                                             required
                                         />
                                     </div>
@@ -372,28 +392,29 @@ export default function GestionPersonal() {
                                     value={form.tipo_documento}
                                     onChange={(e) => setForm((f) => ({ ...f, tipo_documento: e.target.value }))}
                                     options={[{ value: "CEDULA", label: "Cédula" }, { value: "PASAPORTE", label: "Pasaporte" }]}
+                                    required
                                 />
-                                <Input label="Número de identificación" value={form.numero_identificacion} onChange={(e) => setForm((f) => ({ ...f, numero_identificacion: e.target.value }))} />
-                                <Input label="Nombres" value={form.nombres} onChange={(e) => setForm((f) => ({ ...f, nombres: e.target.value }))} />
-                                <Input label="Apellidos" value={form.apellidos} onChange={(e) => setForm((f) => ({ ...f, apellidos: e.target.value }))} />
-                                <Input label="Correo" type="email" value={form.correo} onChange={(e) => setForm((f) => ({ ...f, correo: e.target.value }))} />
-                                <Input label="Teléfono" value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} />
-                                <Input label="Fecha de nacimiento" type="date" value={form.fecha_nacimiento} onChange={(e) => setForm((f) => ({ ...f, fecha_nacimiento: e.target.value }))} />
+                                <Input label="Número de identificación" value={form.numero_identificacion} onChange={(e) => setForm((f) => ({ ...f, numero_identificacion: e.target.value }))} required />
+                                <Input label="Nombres" value={form.nombres} onChange={(e) => setForm((f) => ({ ...f, nombres: e.target.value }))} required />
+                                <Input label="Apellidos" value={form.apellidos} onChange={(e) => setForm((f) => ({ ...f, apellidos: e.target.value }))} required />
+                                <Input label="Correo" type="email" value={form.correo} onChange={(e) => setForm((f) => ({ ...f, correo: e.target.value }))} required />
+                                <Input label="Teléfono" value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} required />
+                                <Input label="Fecha de nacimiento" type="date" value={form.fecha_nacimiento} onChange={(e) => setForm((f) => ({ ...f, fecha_nacimiento: e.target.value }))} required />
                             </div>
 
                             {tipo === "Docente" && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <Input label="Título" value={form.titulo} onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))} />
-                                    <Input label="Especialidad" value={form.especialidad} onChange={(e) => setForm((f) => ({ ...f, especialidad: e.target.value }))} />
+                                    <Input label="Título" value={form.titulo} onChange={(e) => setForm((f) => ({ ...f, titulo: e.target.value }))} required />
+                                    <Input label="Especialidad" value={form.especialidad} onChange={(e) => setForm((f) => ({ ...f, especialidad: e.target.value }))} required />
                                 </div>
                             )}
 
                             <div className="border-t pt-4">
                                 <p className="text-sm font-semibold text-gray-700 mb-2">Dirección</p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <Input label="Ciudad" value={form.direccion.ciudad} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, ciudad: e.target.value } }))} />
-                                    <Input label="Calle principal" value={form.direccion.calle_principal} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, calle_principal: e.target.value } }))} />
-                                    <Input label="Calle secundaria" value={form.direccion.calle_secundaria} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, calle_secundaria: e.target.value } }))} />
+                                    <Input label="Ciudad" value={form.direccion.ciudad} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, ciudad: e.target.value } }))} required />
+                                    <Input label="Calle principal" value={form.direccion.calle_principal} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, calle_principal: e.target.value } }))} required />
+                                    <Input label="Calle secundaria" value={form.direccion.calle_secundaria} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, calle_secundaria: e.target.value } }))} required />
                                     <Input label="Número de casa" value={form.direccion.numero_casa} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, numero_casa: e.target.value } }))} />
                                     <Input label="Referencia" value={form.direccion.referencia} onChange={(e) => setForm((f) => ({ ...f, direccion: { ...f.direccion, referencia: e.target.value } }))} className="sm:col-span-2" />
                                 </div>

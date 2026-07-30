@@ -172,12 +172,13 @@ export default function EnviarNotificacion() {
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje<span className="text-red-500 ml-0.5">*</span></label>
                         <textarea
                             className="w-full rounded border px-3 py-2 text-sm"
                             rows={4}
                             value={mensaje}
                             onChange={(e) => setMensaje(e.target.value)}
+                            required
                         />
                     </div>
 

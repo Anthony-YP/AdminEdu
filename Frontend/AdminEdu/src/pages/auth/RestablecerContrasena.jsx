@@ -58,23 +58,25 @@ export default function RestablecerContrasena() {
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4 mt-6">
                         <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">Nueva contraseña</label>
+                            <label className="block text-sm font-medium text-white/70 mb-1.5">Nueva contraseña<span className="text-red-500 ml-0.5">*</span></label>
                             <input
                                 type="password"
                                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/30"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 disabled={loading}
+                                required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-white/70 mb-1.5">Confirmar contraseña</label>
+                            <label className="block text-sm font-medium text-white/70 mb-1.5">Confirmar contraseña<span className="text-red-500 ml-0.5">*</span></label>
                             <input
                                 type="password"
                                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/30"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 disabled={loading}
+                                required
                             />
                         </div>
 

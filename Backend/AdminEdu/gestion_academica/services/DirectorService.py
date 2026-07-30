@@ -44,38 +44,6 @@ class DirectorService(PersonaService, BaseService):
         return Director.objects.all()
 
     @staticmethod
-    def visualizar_cursos():
-
-        from gestion_academica.models.academia.Academia import Curso
-
-        return Curso.objects.all()
-
-    @staticmethod
-    def crear_paralelo(paralelo):
-
-        if paralelo.cupo_max <= 0:
-            raise ValidationError(
-                "El cupo máximo debe ser mayor que cero."
-            )
-
-        if paralelo.hora_inicio >= paralelo.hora_fin:
-            raise ValidationError(
-                "La hora de inicio debe ser menor que la hora de fin."
-            )
-
-        return True
-
-    @staticmethod
-    def validar_fechas_curso(curso):
-
-        if curso.fecha_inicio >= curso.fecha_fin:
-            raise ValidationError(
-                "La fecha de inicio debe ser anterior a la fecha de finalización."
-            )
-
-        return True
-
-    @staticmethod
     @transaction.atomic
     def dar_baja_estudiante(
         estudiante,

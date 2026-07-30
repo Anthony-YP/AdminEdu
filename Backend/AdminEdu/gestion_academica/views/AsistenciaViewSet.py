@@ -10,14 +10,14 @@ from gestion_academica.serializers.AsistenciaSerializer import (
     AsistenciaBulkCreateSerializer,
 )
 from gestion_academica.services.DocenteService import DocenteService
-from usuarios.permissions import EsDocente, EsAdministrativo
+from usuarios.permissions import EsDocente, EsAdministrativo, EsPersonalInstitucion
 
 
 class AsistenciaViewSet(PermisosViewSet):
 
     serializer_class = AsistenciaSerializer
 
-    permission_read = EsAdministrativo
+    permission_read = EsPersonalInstitucion
     permission_create = EsDocente
     permission_update = EsDocente
     permission_delete = EsAdministrativo

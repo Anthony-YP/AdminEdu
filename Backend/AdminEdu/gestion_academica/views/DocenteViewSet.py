@@ -1,4 +1,3 @@
-from rest_framework import permissions
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,7 +13,7 @@ class DocenteViewSet(PermisosViewSet):
     serializer_class = DocenteSerializer
 
     permission_create = EsAdministrativo
-    permission_read = permissions.IsAuthenticated
+    permission_read = EsAdministrativo
     permission_update = EsAdministrativo
     permission_delete = EsAdministrativo
 

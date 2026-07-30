@@ -59,6 +59,7 @@ export function SearchSelect({
             {label && (
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     {label}
+                    {required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
             )}
             <div className="relative">

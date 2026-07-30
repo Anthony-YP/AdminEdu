@@ -8,8 +8,8 @@ from usuarios.services.password_reset_service import PasswordResetService
 
 
 MENSAJE_GENERICO = (
-    "Si los datos ingresados corresponden a una cuenta registrada, "
-    "se enviaron instrucciones de recuperación al correo asociado."
+    "Si los datos ingresados son correctos, "
+    "se enviaron las instrucciones de recuperación al correo asociado."
 )
 
 
@@ -19,7 +19,6 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 
 
 class PasswordResetRequestView(APIView):
-    """RF02: solicita el restablecimiento de contraseña."""
 
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -44,7 +43,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class PasswordResetConfirmView(APIView):
-    """RF02: confirma el restablecimiento con el token recibido por correo."""
 
     authentication_classes = []
     permission_classes = [AllowAny]

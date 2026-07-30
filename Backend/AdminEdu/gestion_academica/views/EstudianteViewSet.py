@@ -1,4 +1,4 @@
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -15,11 +15,11 @@ class EstudianteViewSet(
 
     permission_create = EsAdministrativo
 
-    permission_read = permissions.IsAuthenticated
+    permission_read = EsAdministrativo
 
     permission_update = EsAdministrativo
 
-    permission_delete = permissions.IsAdminUser
+    permission_delete = EsDirector
 
     permission_actions = {
         "dar_baja": EsDirector,

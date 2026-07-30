@@ -128,7 +128,7 @@ export default function MatriculaManual() {
             setError("Debe seleccionar el estudiante y el paralelo.");
             return;
         }
-        if (!comprobante) {
+        if (form.tipo_pago !== "EFECTIVO" && !comprobante) {
             setError("Debe adjuntar el comprobante de pago.");
             return;
         }
@@ -142,7 +142,7 @@ export default function MatriculaManual() {
             const formData = new FormData();
             formData.append("estudiante", form.estudiante);
             formData.append("paralelo_matricula", form.paralelo_matricula);
-            formData.append("comprobante", comprobante);
+            if (comprobante) formData.append("comprobante", comprobante);
             formData.append("tipo_pago", form.tipo_pago);
             formData.append("monto", form.monto);
             if (form.numero_ref) formData.append("numero_ref", form.numero_ref);
@@ -276,12 +276,13 @@ export default function MatriculaManual() {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Monto ($)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Monto ($)<span className="text-red-500 ml-0.5">*</span></label>
                             <input
                                 type="number" step="0.01" min="0"
                                 className="w-full rounded border px-3 py-2 text-sm"
                                 value={form.monto}
                                 onChange={(e) => setForm((f) => ({ ...f, monto: e.target.value }))}
+                                required
                             />
                         </div>
                     </div>
@@ -297,11 +298,13 @@ export default function MatriculaManual() {
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Comprobante de pago (PDF o PNG)</label>
-                        <input type="file" accept=".pdf,.png,application/pdf,image/png" onChange={handleFileChange} className="text-sm" />
-                        {comprobante && <p className="text-xs text-emerald-600 mt-1">Archivo: {comprobante.name}</p>}
-                    </div>
+                    {form.tipo_pago !== "EFECTIVO" && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Comprobante de pago (PDF o PNG)<span className="text-red-500 ml-0.5">*</span></label>
+                            <input type="file" accept=".pdf,.png,application/pdf,image/png" onChange={handleFileChange} className="text-sm" />
+                            {comprobante && <p className="text-xs text-emerald-600 mt-1">Archivo: {comprobante.name}</p>}
+                        </div>
+                    )}
 
                     <div className="flex justify-end gap-3 border-t pt-4">
                         <Button type="button" variant="secondary" onClick={handleCancelar} disabled={submitting}>
@@ -336,38 +339,45 @@ export default function MatriculaManual() {
                                     value={nuevoEstudiante.tipo_documento}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, tipo_documento: e.target.value }))}
                                     options={[{ value: "CEDULA", label: "Cédula" }, { value: "PASAPORTE", label: "Pasaporte" }]}
+                                    required
                                 />
                                 <Input
                                     label="Número de identificación"
                                     value={nuevoEstudiante.numero_identificacion}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, numero_identificacion: e.target.value }))}
+                                    required
                                 />
                                 <Input
                                     label="Nombres"
                                     value={nuevoEstudiante.nombres}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, nombres: e.target.value }))}
+                                    required
                                 />
                                 <Input
                                     label="Apellidos"
                                     value={nuevoEstudiante.apellidos}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, apellidos: e.target.value }))}
+                                    required
                                 />
                                 <Input
                                     label="Correo"
                                     type="email"
                                     value={nuevoEstudiante.correo}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, correo: e.target.value }))}
+                                    required
                                 />
                                 <Input
                                     label="Teléfono"
                                     value={nuevoEstudiante.telefono}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, telefono: e.target.value }))}
+                                    required
                                 />
                                 <Input
                                     label="Fecha de nacimiento"
                                     type="date"
                                     value={nuevoEstudiante.fecha_nacimiento}
                                     onChange={(e) => setNuevoEstudiante((f) => ({ ...f, fecha_nacimiento: e.target.value }))}
+                                    required
                                 />
                                 <Select
                                     label="Representante legal (si es menor de edad)"
@@ -388,16 +398,19 @@ export default function MatriculaManual() {
                                         label="Ciudad"
                                         value={nuevoEstudiante.direccion.ciudad}
                                         onChange={(e) => setNuevoEstudiante((f) => ({ ...f, direccion: { ...f.direccion, ciudad: e.target.value } }))}
+                                        required
                                     />
                                     <Input
                                         label="Calle principal"
                                         value={nuevoEstudiante.direccion.calle_principal}
                                         onChange={(e) => setNuevoEstudiante((f) => ({ ...f, direccion: { ...f.direccion, calle_principal: e.target.value } }))}
+                                        required
                                     />
                                     <Input
                                         label="Calle secundaria"
                                         value={nuevoEstudiante.direccion.calle_secundaria}
                                         onChange={(e) => setNuevoEstudiante((f) => ({ ...f, direccion: { ...f.direccion, calle_secundaria: e.target.value } }))}
+                                        required
                                     />
                                     <Input
                                         label="Número de casa"

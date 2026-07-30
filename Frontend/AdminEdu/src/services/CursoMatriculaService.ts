@@ -24,31 +24,7 @@ export interface Curso {
     paralelos: Paralelo[];
 }
 
-export interface PerfilAspirante {
-    id: number;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    grupos: string[];
-    photo?: string | null;
-    perfil_completo: boolean;
-}
-
-export interface SolicitudMatricula {
-    id: number;
-    curso: number;
-    curso_nombre: string;
-    paralelo: string;
-    paralelo_id: number;
-    estado: string;
-    fecha_solicitud: string;
-    fecha_aprobacion?: string;
-    comentario: string;
-    comprobante_url?: string;
-}
-
-const AspiranteService = {
+const CursoMatriculaService = {
     async getCursos(): Promise<Curso[]> {
         const { data } = await api.get("/cursos/publicos/");
         return data;
@@ -59,19 +35,9 @@ const AspiranteService = {
         return data;
     },
 
-    async getPerfil(): Promise<PerfilAspirante> {
-        const { data } = await api.get("/aspirante/perfil/");
-        return data;
-    },
-
-    async getSolicitudes(): Promise<SolicitudMatricula[]> {
-        const { data } = await api.get("/aspirante/solicitudes/");
-        return data;
-    },
-
     async solicitarMatricula(formData: FormData): Promise<any> {
         const { data } = await api.post(
-            "/aspirante/solicitar-matricula/",
+            "/estudiante/solicitar-matricula/",
             formData,
             {
                 headers: {
@@ -83,9 +49,9 @@ const AspiranteService = {
     },
 
     async completarPerfil(datos: Record<string, unknown>): Promise<any> {
-        const { data } = await api.post("/aspirante/completar-perfil/", datos);
+        const { data } = await api.post("/estudiante/completar-perfil/", datos);
         return data;
     },
 };
 
-export default AspiranteService;
+export default CursoMatriculaService;

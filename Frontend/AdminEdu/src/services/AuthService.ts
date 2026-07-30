@@ -10,17 +10,14 @@ class AuthService {
     async logout(refresh: string | null, access: string | null): Promise<void> {
         if (!refresh) return;
         try {
-            // El access token ya fue removido de localStorage por el
-            // llamador, así que se envía explícitamente en el header
-            // en vez de depender del interceptor de axios.
+            
             await api.post(
                 "/logout",
                 { refresh },
                 access ? { headers: { Authorization: `Bearer ${access}` } } : undefined
             );
         } catch {
-            // Si el token ya expiró o el servidor no responde, igual
-            // limpiamos la sesión localmente (ver AuthContext.logout).
+        
         }
     }
 

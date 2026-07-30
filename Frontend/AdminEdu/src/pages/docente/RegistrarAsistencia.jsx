@@ -125,12 +125,13 @@ export default function RegistrarAsistencia() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Paralelo</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Paralelo<span className="text-red-500 ml-0.5">*</span></label>
                         <select
                             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={paraleloId}
                             onChange={(e) => handleParaleloChange(e.target.value)}
                             disabled={loadingParalelos}
+                            required
                         >
                             <option value="">Selecciona un paralelo</option>
                             {paralelos.map((p) => (
@@ -139,12 +140,13 @@ export default function RegistrarAsistencia() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Fecha<span className="text-red-500 ml-0.5">*</span></label>
                         <input
                             type="date"
                             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={fecha}
                             onChange={(e) => setFecha(e.target.value)}
+                            required
                         />
                     </div>
                 </div>

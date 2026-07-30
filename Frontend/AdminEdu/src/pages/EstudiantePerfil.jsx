@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import api from "../api/api";
-import AspiranteService from "../services/AspiranteService";
+import CursoMatriculaService from "../services/CursoMatriculaService";
 import { Alert } from "../components/ui/Alert";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -127,7 +127,7 @@ export default function EstudiantePerfil() {
 
         try {
             setCompletarLoading(true);
-            await AspiranteService.completarPerfil({
+            await CursoMatriculaService.completarPerfil({
                 ...datosPerfil,
                 direccion: direccionPerfil,
                 representante_legal: esMenorDeEdadPerfil ? representantePerfil : undefined,
@@ -244,7 +244,7 @@ export default function EstudiantePerfil() {
                             <h3 className="text-base font-semibold text-gray-900">Datos personales</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de documento</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de documento<span className="text-red-500 ml-0.5">*</span></label>
                                     <select
                                         className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         value={datosPerfil.tipo_documento}
@@ -286,7 +286,7 @@ export default function EstudiantePerfil() {
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de documento</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de documento<span className="text-red-500 ml-0.5">*</span></label>
                                         <select
                                             className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             value={representantePerfil.tipo_documento}

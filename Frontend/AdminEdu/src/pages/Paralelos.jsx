@@ -474,7 +474,7 @@ export default function Paralelos() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Días de Clase</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Días de Clase<span className="text-red-500 ml-0.5">*</span></label>
                                 <div className="flex flex-wrap gap-2">
                                     {DIAS_SEMANA.map((dia) => (
                                         <button

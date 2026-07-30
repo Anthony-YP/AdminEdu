@@ -536,7 +536,7 @@ export default function Cursos() {
                                     />
                                 </div>
                                 <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción<span className="text-red-500 ml-0.5">*</span></label>
                                     <textarea
                                         name="descripcion"
                                         value={formData.descripcion}

@@ -62,16 +62,10 @@ export default function Login() {
     useEffect(() => {
         if (isAuthenticated && usuario) {
             const grupos = usuario.groups || [];
-            // "Estudiante" tiene prioridad sobre "Aspirante": un usuario que ya
-            // completó su perfil conserva el grupo Aspirante, pero su portal
-            // principal pasa a ser el de Estudiante (que también puede
-            // explorar/solicitar cursos nuevos).
             if (grupos.includes("Administrador")) {
                 navigate("/admin", { replace: true });
             } else if (grupos.includes("Estudiante")) {
                 navigate("/estudiante-dashboard", { replace: true });
-            } else if (grupos.includes("Aspirante")) {
-                navigate("/aspirante", { replace: true });
             } else {
                 // Director, Secretaria, Docente, Representante → dashboard general
                 navigate("/dashboard", { replace: true });
@@ -183,15 +177,15 @@ export default function Login() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                 </div>
-                                <h2 className="text-lg font-bold text-white">Usuarios del Sistema</h2>
+                                <h2 className="text-lg font-bold text-white">Usuarios del Sistema:</h2>
                             </div>
-                            <p className="text-white/40 text-xs ml-11">Director, Secretaría, Docente, Estudiante</p>
+                            <p className="text-white/40 text-xs ml-11">Si eres Director, Secretaría o Docente, inicia secion con tus credenciales asignadas.</p>
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-white/70 mb-1.5">
-                                    Usuario
+                                    Usuario<span className="text-red-500 ml-0.5">*</span>
                                 </label>
                                 <input
                                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-white placeholder-white/30 transition-all"
@@ -202,12 +196,13 @@ export default function Login() {
                                     autoFocus
                                     autoComplete="username"
                                     disabled={loading}
+                                    required
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-white/70 mb-1.5">
-                                    Contraseña
+                                    Contraseña<span className="text-red-500 ml-0.5">*</span>
                                 </label>
                                 <div className="relative">
                                     <input
@@ -218,6 +213,7 @@ export default function Login() {
                                         onChange={e => setPassword(e.target.value)}
                                         autoComplete="current-password"
                                         disabled={loading}
+                                        required
                                     />
                                     <button
                                         type="button"
@@ -283,7 +279,7 @@ export default function Login() {
                             </button>
                         </form>
 
-                        {/* Separador aspirantes */}
+                        {/* Separador estudiantes */}
                         <div className="flex items-center my-6">
                             <div className="flex-1 border-t border-white/10"></div>
                             <span className="px-4 text-xs font-semibold text-emerald-400/60 uppercase tracking-wider">Para estudiantes</span>
@@ -291,7 +287,7 @@ export default function Login() {
                         </div>
 
                         <p className="text-white/40 text-xs text-center mb-4">
-                            ¿Eres estudiante? Ingresa con tu cuenta de Google para solicitar matrícula.
+                            Si eres estudiante ingresa con tu cuenta de Google para registrarte o iniciar sesión.
                         </p>
 
                         <button

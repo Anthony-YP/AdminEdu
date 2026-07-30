@@ -99,17 +99,29 @@ class MatriculaViewSet(
             )
         )
 
-        if self.request.user.groups.filter(
-            name="Estudiante"
-        ).exists():
+        user = self.request.user
+        grupos = set(user.groups.values_list("name", flat=True))
 
-            return queryset.filter(
-                estudiante__usuario=(
-                    self.request.user
-                )
-            )
+        # Personal administrativo ve todas las matrículas (es su trabajo
+        # revisarlas/aprobarlas). El resto de roles solo ve lo propio.
+        if (
+            user.is_superuser
+            or "Administrador" in grupos
+            or "Director" in grupos
+            or "Secretaria" in grupos
+        ):
+            return queryset
 
-        return queryset
+        if "Estudiante" in grupos:
+            return queryset.filter(estudiante__usuario=user)
+
+        if "Docente" in grupos:
+            return queryset.filter(paralelo_matricula__docente__usuario=user)
+
+        if "Representante" in grupos:
+            return queryset.filter(estudiante__representante_legal__usuario=user)
+
+        return queryset.none()
 
     def create(
         self,
@@ -121,7 +133,7 @@ class MatriculaViewSet(
             "POST",
             detail=(
                 "No se pueden crear matrículas por esta vía. "
-                "Use aspirante/solicitar-matricula/ (estudiante) "
+                "Use estudiante/solicitar-matricula/ (estudiante) "
                 "o matriculas/manual/ (secretaría)."
             ),
         )
@@ -280,7 +292,7 @@ class MatriculaViewSet(
         """
         RF16: la secretaría matricula manualmente a un estudiante ya
         registrado, adjuntando el comprobante de pago en el mismo paso
-        (mismo patrón que AspiranteMatriculaView).
+        (mismo patrón que SolicitarMatriculaView).
         """
 
         estudiante_id = request.data.get("estudiante")
@@ -296,18 +308,21 @@ class MatriculaViewSet(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not comprobante:
-            return Response(
-                {"detail": "Debe adjuntar el comprobante de pago."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if tipo_pago != "EFECTIVO":
+            if not comprobante:
+                return Response(
+                    {"detail": "Debe adjuntar el comprobante de pago."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        nombre_archivo = getattr(comprobante, "name", "") or ""
-        if not nombre_archivo.lower().endswith((".pdf", ".png")):
-            return Response(
-                {"detail": "El comprobante debe ser un archivo PDF o PNG."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            nombre_archivo = getattr(comprobante, "name", "") or ""
+            if not nombre_archivo.lower().endswith((".pdf", ".png")):
+                return Response(
+                    {"detail": "El comprobante debe ser un archivo PDF o PNG."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            comprobante = None
 
         try:
             estudiante = Estudiante.objects.get(id=estudiante_id)

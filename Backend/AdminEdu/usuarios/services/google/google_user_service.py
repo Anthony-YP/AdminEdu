@@ -21,8 +21,7 @@ class GoogleUserService:
         last_name: str,
     ):
         """
-        Busca un usuario por correo.
-
+        Buscamos un usuario por correo.
         Si no existe,
         lo crea y lo registra como Estudiante.
         """

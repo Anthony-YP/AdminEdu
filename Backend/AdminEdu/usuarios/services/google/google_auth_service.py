@@ -5,12 +5,7 @@ User = get_user_model()
 
 class GoogleAuthService:
     """
-    Servicio encargado de validar la autenticación
-    mediante Google.
-
-    Este servicio NO genera respuestas HTTP.
-
-    Su única responsabilidad es validar que el usuario
+    Validar que el usuario
     autenticado por Google pueda acceder a AdminEdu.
     """
 
@@ -41,18 +36,4 @@ class GoogleAuthService:
         """
         Verifica si el usuario está activo.
         """
-
         return user.is_active
-    
-
-    @staticmethod
-    def is_email_verified(social_account):
-        """
-        Verifica que Google haya confirmado
-        el correo electrónico.
-        """
-
-        return social_account.extra_data.get(
-            "email_verified",
-            False,
-        )
